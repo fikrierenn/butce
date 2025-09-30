@@ -1,20 +1,65 @@
 {
   "short_name": "SpendMe",
   "name": "SpendMe: Akıllı Bütçe Takibi",
+  "description": "Yapay zeka destekli kişisel bütçe takip uygulaması",
   "icons": [
+    {
+      "src": "https://img.icons8.com/fluency/72/budget.png",
+      "type": "image/png",
+      "sizes": "72x72",
+      "purpose": "any"
+    },
+    {
+      "src": "https://img.icons8.com/fluency/96/budget.png",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "any"
+    },
+    {
+      "src": "https://img.icons8.com/fluency/128/budget.png",
+      "type": "image/png",
+      "sizes": "128x128",
+      "purpose": "any"
+    },
+    {
+      "src": "https://img.icons8.com/fluency/144/budget.png",
+      "type": "image/png",
+      "sizes": "144x144",
+      "purpose": "any"
+    },
+    {
+      "src": "https://img.icons8.com/fluency/152/budget.png",
+      "type": "image/png",
+      "sizes": "152x152",
+      "purpose": "any"
+    },
     {
       "src": "https://img.icons8.com/fluency/192/budget.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://img.icons8.com/fluency/384/budget.png",
+      "type": "image/png",
+      "sizes": "384x384",
+      "purpose": "any"
     },
     {
       "src": "https://img.icons8.com/fluency/512/budget.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "theme_color": "#4F46E5",
-  "background_color": "#f8fafc"
+  "background_color": "#f8fafc",
+  "categories": ["finance", "productivity"],
+  "lang": "tr",
+  "dir": "ltr",
+  "prefer_related_applications": false
 }

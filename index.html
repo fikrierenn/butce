@@ -2,10 +2,34 @@
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SpendMe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>SpendMe - Akıllı Bütçe Takibi</title>
+    
+    <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Theme Color -->
     <meta name="theme-color" content="#4F46E5" />
+    <meta name="msapplication-TileColor" content="#4F46E5" />
+    
+    <!-- App Info -->
+    <meta name="description" content="Yapay zeka destekli kişisel bütçe takip uygulaması" />
+    <meta name="application-name" content="SpendMe" />
+    <meta name="apple-mobile-web-app-title" content="SpendMe" />
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/180/budget.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="https://img.icons8.com/fluency/152/budget.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/fluency/180/budget.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="https://img.icons8.com/fluency/167/budget.png" />
+    
+    <!-- iOS Web App -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="https://img.icons8.com/fluency/32/budget.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="https://img.icons8.com/fluency/16/budget.png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="importmap">
 {
@@ -26,5 +50,43 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+    
+    <!-- PWA Service Worker -->
+    <script>
+      // Türkçe Açıklama:
+      // Service Worker'ı kaydet - offline çalışma ve cache için
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('✅ Service Worker kaydedildi:', registration.scope);
+            })
+            .catch((error) => {
+              console.log('❌ Service Worker kaydedilemedi:', error);
+            });
+        });
+      }
+
+      // PWA kurulum prompt'unu yakala
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('💾 PWA kurulumu mevcut');
+      });
+
+      // PWA kurulum fonksiyonu (isteğe bağlı UI'da kullanılabilir)
+      window.installPWA = () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('✅ Kullanıcı PWA kurulumunu kabul etti');
+            }
+            deferredPrompt = null;
+          });
+        }
+      };
+    </script>
   </body>
 </html>
