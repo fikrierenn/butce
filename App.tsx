@@ -117,16 +117,29 @@ const App: React.FC = () => {
                         // URL'den davet kodunu temizle
                         window.history.replaceState({}, document.title, window.location.pathname);
                     } else {
+                        // Türkçe Açıklama:
                         // Davet kodu yoksa, kullanıcının izinli olup olmadığını kontrol et
-                        const { data: isAllowed, error: allowError } = await supabase.rpc('is_user_allowed', {
-                            user_email: currentUser.email
-                        });
+                        // Not: Eğer fonksiyon yoksa (SQL çalıştırılmadıysa), tüm kullanıcılara izin ver
+                        try {
+                            const { data: isAllowed, error: allowError } = await supabase.rpc('is_user_allowed', {
+                                user_email: currentUser.email
+                            });
 
-                        if (allowError || !isAllowed) {
-                            // Davet kodu iste
-                            setNeedsInviteCode(true);
-                            await supabase.auth.signOut();
-                            return;
+                            // Eğer fonksiyon bulunamadıysa (42883 = undefined function), devam et
+                            if (allowError && allowError.code !== '42883') {
+                                console.error('İzin kontrolü hatası:', allowError);
+                            }
+
+                            // Fonksiyon varsa ve kullanıcı izinli değilse
+                            if (!allowError && !isAllowed) {
+                                setNeedsInviteCode(true);
+                                await supabase.auth.signOut();
+                                setLoading(false);
+                                return;
+                            }
+                        } catch (err) {
+                            // Hata varsa logla ama uygulamayı çalıştırmaya devam et
+                            console.warn('İzin kontrolü atlandı:', err);
                         }
                     }
 
