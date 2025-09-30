@@ -12,6 +12,7 @@ import SettingsScreen from './screens/SettingsScreen';
 import BottomNavBar from './components/BottomNavBar';
 import TransactionForm from './components/TransactionForm';
 import AddAccountModal from './components/AddAccountModal';
+import InstallPWAButton from './components/InstallPWAButton';
 
 const App: React.FC = () => {
     const [session, setSession] = useState<Session | null>(null);
@@ -358,6 +359,7 @@ const App: React.FC = () => {
                     onSubmit={handleAddAccount}
                 />
             )}
+            <InstallPWAButton />
         </div>
     );
 };
