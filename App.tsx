@@ -17,6 +17,8 @@ const App: React.FC = () => {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [needsInviteCode, setNeedsInviteCode] = useState(false);
+    const [inviteCodeInput, setInviteCodeInput] = useState('');
 
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
@@ -95,6 +97,39 @@ const App: React.FC = () => {
                 const currentUser = session?.user ?? null;
                 setUser(currentUser);
                  if (_event === 'SIGNED_IN' && currentUser) {
+                    // Türkçe Açıklama:
+                    // URL'den davet kodunu kontrol et
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const inviteCode = urlParams.get('invite');
+                    
+                    if (inviteCode) {
+                        // Davet kodunu doğrula ve kullan
+                        const { data: isValid, error: inviteError } = await supabase.rpc('validate_and_use_invite', {
+                            code_param: inviteCode,
+                            user_email_param: currentUser.email
+                        });
+
+                        if (inviteError || !isValid) {
+                            alert('Davet kodu geçersiz veya süresi dolmuş. Lütfen yeni bir davet kodu alın.');
+                            await supabase.auth.signOut();
+                            return;
+                        }
+                        // URL'den davet kodunu temizle
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    } else {
+                        // Davet kodu yoksa, kullanıcının izinli olup olmadığını kontrol et
+                        const { data: isAllowed, error: allowError } = await supabase.rpc('is_user_allowed', {
+                            user_email: currentUser.email
+                        });
+
+                        if (allowError || !isAllowed) {
+                            // Davet kodu iste
+                            setNeedsInviteCode(true);
+                            await supabase.auth.signOut();
+                            return;
+                        }
+                    }
+
                     const { error } = await supabase.rpc('add_initial_categories');
                     if (error) console.error("Error adding initial categories: ", error);
                     await fetchData(currentUser);
@@ -199,6 +234,51 @@ const App: React.FC = () => {
 
     if (loading) {
         return <div className="min-h-screen bg-slate-50 flex justify-center items-center">Yükleniyor...</div>;
+    }
+
+    // Türkçe Açıklama:
+    // Davet kodu gerekiyorsa, davet kodu giriş ekranını göster
+    if (needsInviteCode) {
+        const handleInviteSubmit = async () => {
+            if (!inviteCodeInput.trim()) {
+                alert('Lütfen bir davet kodu girin.');
+                return;
+            }
+            // Davet koduyla birlikte sayfayı yeniden yükle
+            window.location.href = `${window.location.origin}?invite=${inviteCodeInput.trim().toUpperCase()}`;
+        };
+
+        return (
+            <div className="bg-slate-50 min-h-screen font-sans flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+                    <h2 className="text-2xl font-bold mb-4 text-center">🎟️ Davet Kodu Gerekli</h2>
+                    <p className="text-gray-600 mb-6 text-center">
+                        Bu uygulamayı kullanmak için bir davet koduna ihtiyacınız var. 
+                        Lütfen size gönderilen davet linkini kullanın veya kodu aşağıya girin.
+                    </p>
+                    <input
+                        type="text"
+                        value={inviteCodeInput}
+                        onChange={(e) => setInviteCodeInput(e.target.value.toUpperCase())}
+                        placeholder="DAVET KODU"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-md mb-4 text-center font-mono text-lg"
+                        maxLength={8}
+                    />
+                    <button
+                        onClick={handleInviteSubmit}
+                        className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 transition-colors font-medium"
+                    >
+                        Devam Et
+                    </button>
+                    <button
+                        onClick={() => setNeedsInviteCode(false)}
+                        className="w-full mt-3 text-gray-600 py-2 hover:text-gray-800"
+                    >
+                        Geri Dön
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     if (!session) {

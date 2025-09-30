@@ -4,6 +4,7 @@ import { Account, Budget, Category } from '../types';
 import AccountManager from '../components/AccountManager';
 // Fix: Corrected import path for CategoryManager
 import CategoryManager from '../components/CategoryManager';
+import InviteManager from '../components/InviteManager';
 
 interface SettingsScreenProps {
     accounts: Account[];
@@ -28,6 +29,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
 }) => {
     return (
         <div className="space-y-6">
+            <InviteManager />
             <AccountManager 
                 accounts={accounts} 
                 onAddAccount={onAddAccount} 
