@@ -11,8 +11,8 @@ Bu kılavuz, SpendMe uygulamanızda davet kodu sisteminihazırlama ve yeni kulla
 5. **RUN** butonuna basın
 
 Bu script şunları oluşturur:
-- `invite_codes` tablosu
-- `allowed_users` tablosu (kullanıcı izin listesi)
+- `but_invite_codes` tablosu
+- `but_allowed_users` tablosu (kullanıcı izin listesi)
 - Davet kodu yönetim fonksiyonları
 
 ## ✅ Adım 2: Kendinizi İzinli Listeye Ekleyin
@@ -22,7 +22,7 @@ Bu script şunları oluşturur:
 SQL Editor'de şu komutu çalıştırın (kendi email adresinizi yazın):
 
 ```sql
-INSERT INTO public.allowed_users (email, notes)
+INSERT INTO public.but_allowed_users (email, notes)
 VALUES ('sizin-email@gmail.com', 'Admin - İlk kullanıcı');
 ```
 
@@ -81,7 +81,7 @@ SELECT * FROM public.get_my_invites();
 SELECT public.delete_invite('ABC12345');
 
 -- İzinli kullanıcıları listele
-SELECT * FROM public.allowed_users ORDER BY added_at DESC;
+SELECT * FROM public.but_allowed_users ORDER BY added_at DESC;
 ```
 
 ## 🚀 Kullanıcı Deneyimi Akışı
@@ -173,7 +173,7 @@ SELECT
     COUNT(*) as toplam_davet,
     COUNT(*) FILTER (WHERE is_used) as kullanilmis,
     COUNT(*) FILTER (WHERE NOT is_used AND expires_at > now()) as aktif
-FROM public.invite_codes
+FROM public.but_invite_codes
 WHERE created_by = auth.uid();
 ```
 
@@ -181,7 +181,7 @@ WHERE created_by = auth.uid();
 
 **Davet kodu çalışmıyor:**
 - SQL scriptinin tamamen çalıştığından emin olun
-- `allowed_users` tablosunun oluştuğunu kontrol edin
+- `but_allowed_users` tablosunun oluştuğunu kontrol edin
 - Kodun doğru yazıldığından emin olun (büyük harf, 8 karakter)
 
 **"is_user_allowed function not found" hatası:**
