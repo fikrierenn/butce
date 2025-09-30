@@ -1,0 +1,20 @@
+{
+  "short_name": "SpendMe",
+  "name": "SpendMe: Akıllı Bütçe Takibi",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/fluency/192/budget.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://img.icons8.com/fluency/512/budget.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4F46E5",
+  "background_color": "#f8fafc"
+}

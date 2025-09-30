@@ -1,0 +1,5 @@
+{
+  "name": "SpendMe",
+  "description": "SpendMe, kullanıcıların aylık gelir ve giderlerini takip etmelerini sağlayan, verileri görselleştiren ve bütçe yönetimine yardımcı olan bir web uygulaması.",
+  "requestFramePermissions": []
+}

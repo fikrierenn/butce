@@ -1,0 +1,129 @@
+import React, { useMemo, useState } from 'react';
+import { Budget, Transaction, Category, TransactionType } from '../types';
+import ExclamationIcon from './icons/ExclamationIcon';
+import TrashIcon from './icons/TrashIcon';
+
+interface BudgetStatusProps {
+    budgets: Budget[];
+    transactions: Transaction[];
+    categories: Category[]; // Hierarchical
+    onUpdateBudget: (id: number, limit: number) => Promise<void>;
+    onDeleteBudget: (id: number) => Promise<void>;
+}
+
+const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(amount);
+};
+
+const getSpentAmountForCategory = (category: Category, transactions: Transaction[]): number => {
+    let total = 0;
+    const categoryIds = [category.id, ...(category.subcategories?.map(sc => sc.id) || [])];
+    
+    transactions.forEach(t => {
+        if (t.type === TransactionType.EXPENSE && t.category_id && categoryIds.includes(t.category_id)) {
+            total += t.amount;
+        }
+    });
+    return total;
+};
+
+const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, categories, onUpdateBudget, onDeleteBudget }) => {
+    
+    const flatCategories = useMemo(() => categories.flatMap(c => [c, ...(c.subcategories || [])]), [categories]);
+
+    const budgetData = useMemo(() => {
+        return budgets.map(budget => {
+            const category = flatCategories.find(c => c.id === budget.category_id);
+            if (!category) return null;
+
+            const spent = getSpentAmountForCategory(category, transactions);
+            const remaining = budget.limit - spent;
+            const percentage = budget.limit > 0 ? (spent / budget.limit) * 100 : 0;
+
+            return {
+                ...budget,
+                categoryName: category?.name || 'Bilinmeyen Kategori',
+                spent,
+                remaining,
+                percentage: Math.min(percentage, 100)
+            };
+        }).filter(Boolean);
+    }, [budgets, transactions, categories, flatCategories]);
+
+    const [editingBudgetId, setEditingBudgetId] = useState<number | null>(null);
+    const [newLimit, setNewLimit] = useState('');
+
+    const handleEdit = (budget: typeof budgetData[0]) => {
+        if (!budget) return;
+        setEditingBudgetId(budget.id);
+        setNewLimit(String(budget.limit));
+    };
+
+    const handleSave = async (id: number) => {
+        const limit = parseFloat(newLimit);
+        if(!isNaN(limit) && limit > 0) {
+            await onUpdateBudget(id, limit);
+        }
+        setEditingBudgetId(null);
+        setNewLimit('');
+    }
+
+    const handleDelete = (id: number) => {
+        if (window.confirm("Bu bütçeyi silmek istediğinizden emin misiniz?")) {
+            onDeleteBudget(id);
+        }
+    }
+
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-lg font-bold text-slate-800 mb-4">Aylık Bütçeler</h3>
+            {budgetData.length > 0 ? (
+                <ul className="space-y-4">
+                    {budgetData.map(b => (
+                        b && <li key={b.id}>
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="font-medium text-slate-700">{b.categoryName}</span>
+                                {editingBudgetId === b.id ? (
+                                    <div className="flex items-center space-x-2">
+                                        <input 
+                                            type="number"
+                                            value={newLimit}
+                                            onChange={(e) => setNewLimit(e.target.value)}
+                                            className="w-24 text-right px-2 py-1 border border-slate-300 rounded-md text-sm"
+                                        />
+                                        <button onClick={() => handleSave(b.id)} className="text-indigo-600 text-sm font-semibold">Kaydet</button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center space-x-3">
+                                        <span className="text-sm text-slate-500 cursor-pointer" onClick={() => handleEdit(b)}>{formatCurrency(b.spent)} / {formatCurrency(b.limit)}</span>
+                                        <button onClick={() => handleDelete(b.id)} className="text-slate-400 hover:text-red-600">
+                                            <TrashIcon />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="w-full bg-slate-200 rounded-full h-2.5">
+                                <div 
+                                    className={`h-2.5 rounded-full ${b.percentage > 90 ? 'bg-red-500' : b.percentage > 75 ? 'bg-yellow-500' : 'bg-indigo-600'}`}
+                                    style={{ width: `${b.percentage}%` }}
+                                ></div>
+                            </div>
+                             {b.remaining < 0 && (
+                                <p className="text-xs text-red-600 mt-1 flex items-center">
+                                    <ExclamationIcon className="h-4 w-4 mr-1" />
+                                    Bütçeyi {formatCurrency(Math.abs(b.remaining))} aştınız.
+                                </p>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <div className="text-center py-6">
+                    <p className="text-slate-500">Henüz bütçe oluşturulmamış.</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default BudgetStatus;
