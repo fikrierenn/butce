@@ -2,7 +2,7 @@
 // Service Worker - PWA için offline çalışma ve cache yönetimi
 // Bu dosya uygulamanın ana kaynaklarını cache'ler ve offline erişim sağlar
 
-const CACHE_NAME = 'spendme-v1';
+const CACHE_NAME = 'spendme-v2';
 const urlsToCache = [
   '/',
   '/index.html',
