@@ -1,0 +1,17 @@
+# Türkçe Açıklama:
+# Netlify deployment yapılandırma dosyası
+# Build komutlarını ve yayın dizinini belirtir
+
+[build]
+  # Build komutu - uygulamayı derler
+  command = "npm run build"
+  
+  # Yayınlanacak dizin - derlenen dosyaların bulunduğu yer
+  publish = "dist"
+
+# Türkçe Açıklama:
+# Tüm route'ları index.html'e yönlendir (SPA için gerekli)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
