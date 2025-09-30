@@ -45,7 +45,6 @@
   }
 }
 </script>
-  <link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
@@ -55,7 +54,8 @@
     <script>
       // Türkçe Açıklama:
       // Service Worker'ı kaydet - offline çalışma ve cache için
-      if ('serviceWorker' in navigator) {
+      // Not: Service Worker sadece HTTPS veya localhost'ta çalışır
+      if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
