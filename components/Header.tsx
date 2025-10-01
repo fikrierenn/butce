@@ -15,7 +15,7 @@ const Header: React.FC<HeaderProps> = ({ title, user, onLogout }) => {
                     <h1 className="text-xl font-bold text-slate-800">{title}</h1>
                     <div className="flex items-center space-x-4">
                         {user?.email && (
-                            <span className="text-xs text-gray-500 hidden sm:inline">
+                            <span className="text-xs text-gray-500 truncate max-w-32 sm:max-w-48">
                                 {user.email}
                             </span>
                         )}
