@@ -316,6 +316,7 @@ const App: React.FC = () => {
                 return <BudgetsScreen budgets={budgets} transactions={transactions} categories={categories} onUpdateBudget={handleAddOrUpdateBudget} onDeleteBudget={handleDeleteBudget} />;
             case 'settings':
                 return <SettingsScreen 
+                    user={user}
                     accounts={accounts} 
                     categories={categories}
                     budgets={budgets}
