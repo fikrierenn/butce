@@ -334,7 +334,7 @@ const App: React.FC = () => {
     return (
         <div className="bg-slate-50 min-h-screen font-sans">
             <div className="max-w-2xl mx-auto bg-white min-h-screen flex flex-col">
-                <Header title={screenTitles[activeScreen]} onLogout={handleLogout} />
+                <Header title={screenTitles[activeScreen]} user={user} onLogout={handleLogout} />
                 <main className="flex-grow p-4 sm:p-6 pb-24">
                     {renderScreen()}
                 </main>
