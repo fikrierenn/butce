@@ -17,7 +17,7 @@ interface SettingsScreenProps {
     onDeleteAccount: (id: number) => Promise<void>;
     onAddCategory: (category: Omit<Category, 'id' | 'user_id'>) => Promise<void>;
     onDeleteCategory: (id: number) => Promise<void>;
-    onAddBudget: (categoryId: number, limit: number) => void;
+    onAddBudget: (categoryId: number, limit: number, month: string) => void;
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ 

@@ -66,5 +66,8 @@ export interface Budget {
     user_id: string;
     category_id: number;
     limit: number;
+    // Türkçe Açıklama:
+    // Aylık bütçe tanımı için ay bilgisi (YYYY-MM)
+    month?: string; 
     created_at: string;
 }

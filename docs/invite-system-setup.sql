@@ -169,6 +169,39 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================
+-- MIGRATION: Bütçeleri ay bazlı yapmak için month sütunu
+-- ============================================
+
+-- 8. but_budgets tablosuna month (YYYY-MM) sütunu ekle
+ALTER TABLE public.but_budgets
+ADD COLUMN IF NOT EXISTS month text;
+
+-- 9. Eski unique kısıtı kaldır ve yenisini ekle (user_id + category_id + month)
+DO $$
+BEGIN
+    -- Eski unique kısıt adı bilinmediği için güvenli kaldırma:
+    IF EXISTS (
+        SELECT 1 FROM pg_indexes 
+        WHERE schemaname = 'public' 
+          AND tablename = 'but_budgets' 
+          AND indexname = 'but_budgets_category_id_key'
+    ) THEN
+        EXECUTE 'DROP INDEX public.but_budgets_category_id_key';
+    END IF;
+EXCEPTION WHEN OTHERS THEN
+    -- Yoksay
+END $$;
+
+-- Yeni unique index
+CREATE UNIQUE INDEX IF NOT EXISTS but_budgets_user_category_month_unique
+    ON public.but_budgets (user_id, category_id, COALESCE(month, to_char(now(), 'YYYY-MM')));
+
+-- 10. Mevcut kayıtlara mevcut ayı set et (boş olanlar için)
+UPDATE public.but_budgets
+SET month = to_char(now(), 'YYYY-MM')
+WHERE month IS NULL;
+
+-- ============================================
 -- ÖRNEK KULLANIM
 -- ============================================
 

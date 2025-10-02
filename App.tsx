@@ -25,6 +25,9 @@ const App: React.FC = () => {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [budgets, setBudgets] = useState<Budget[]>([]);
+    // Türkçe Açıklama:
+    // Bütçeleri ay bazlı yönetmek için seçili ayı YYYY-MM formatında tutuyoruz.
+    const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toLocaleDateString('en-CA').slice(0, 7));
 
     const [activeScreen, setActiveScreen] = useState('home');
     const [isTransactionFormOpen, setTransactionFormOpen] = useState(false);
@@ -61,7 +64,7 @@ const App: React.FC = () => {
             supabase.from('but_transactions').select('*').eq('user_id', currentUser.id).order('date', { ascending: false }).order('created_at', { ascending: false }),
             supabase.from('but_accounts').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }),
             supabase.from('but_categories').select('*').eq('user_id', currentUser.id).order('name'),
-            supabase.from('but_budgets').select('*').eq('user_id', currentUser.id)
+            supabase.from('but_budgets').select('*').eq('user_id', currentUser.id).eq('month', selectedMonth)
         ]);
         
         if (tError || aError || cError || bError) {
@@ -77,7 +80,7 @@ const App: React.FC = () => {
         setBudgets(budgetsData || []);
         setLoading(false);
 
-    }, []);
+    }, [selectedMonth]);
 
     useEffect(() => {
         const getSession = async () => {
@@ -225,18 +228,42 @@ const App: React.FC = () => {
         else await fetchData(user);
     }
 
-    const handleAddOrUpdateBudget = async (categoryId: number, limit: number) => {
+    const handleAddOrUpdateBudget = async (categoryId: number, limit: number, month: string) => {
         if (!user) return;
-        const existingBudget = budgets.find(b => b.category_id === categoryId);
+        const existingBudget = budgets.find(b => b.category_id === categoryId && b.month === month);
 
         if (existingBudget) {
+            // Optimistic update
+            setBudgets(prev => prev.map(b => b.id === existingBudget.id ? { ...b, limit } as Budget : b));
             const { error } = await supabase.from('but_budgets').update({ limit }).match({ id: existingBudget.id });
             if (error) console.error('Error updating budget:', error);
         } else {
-            const { error } = await supabase.from('but_budgets').insert({ category_id: categoryId, limit, user_id: user.id });
-            if (error) console.error('Error adding budget:', error);
+            // Optimistic insert
+            const tempId = Math.floor(Math.random() * 1_000_000_000);
+            const optimistic: Budget = {
+                id: tempId,
+                user_id: user.id,
+                category_id: categoryId,
+                limit,
+                month,
+                created_at: new Date().toISOString(),
+            };
+            setBudgets(prev => [...prev, optimistic]);
+
+            const { data, error } = await supabase
+                .from('but_budgets')
+                .insert({ category_id: categoryId, limit, user_id: user.id, month })
+                .select()
+                .single();
+            if (error) {
+                console.error('Error adding budget:', error);
+                // Revert optimistic insert on error
+                setBudgets(prev => prev.filter(b => b.id !== tempId));
+            } else if (data) {
+                // Replace optimistic with real row
+                setBudgets(prev => prev.map(b => (b.id === tempId ? data : b)));
+            }
         }
-        await fetchData(user);
     }
     
     const handleDeleteBudget = async (id: number) => {
