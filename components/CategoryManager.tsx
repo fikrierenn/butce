@@ -12,11 +12,14 @@ interface CategoryManagerProps {
     onAddBudget: (categoryId: number, limit: number, month: string) => void;
 }
 
-const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, onAddCategory, onDeleteCategory, onAddBudget }) => {
+const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, selectedMonth, onAddCategory, onDeleteCategory, onAddBudget }) => {
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryType, setNewCategoryType] = useState<'income' | 'expense'>('expense');
     const [parentId, setParentId] = useState<number | null>(null);
     const [budgetInputs, setBudgetInputs] = useState<{[key: number]: string}>({});
+    // Türkçe Açıklama:
+    // Üstten gelen ay değeri yoksa, güvenli varsayılan olarak bugünün ayını kullan.
+    const month = selectedMonth ?? new Date().toLocaleDateString('en-CA').slice(0,7);
 
     // Türkçe Açıklama:
     // Belirli bir kategori için bütçe var mı kontrol et
@@ -133,7 +136,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                                     className="flex-1 px-3 py-2 border border-slate-300 rounded-md text-sm"
                                 />
                                 <button
-                                    onClick={() => onAddBudget(parent.id, parseFloat(budgetInputs[parent.id] || '0'), selectedMonth)}
+                                    onClick={() => onAddBudget(parent.id, parseFloat(budgetInputs[parent.id] || '0'), month)}
                                     className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium"
                                 >
                                     {getBudgetForCategory(parent.id) ? 'Güncelle' : 'Kaydet'}
@@ -164,7 +167,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                                                 className="w-20 px-2 py-1 border border-slate-300 rounded text-xs"
                                             />
                                             <button
-                                                onClick={() => onAddBudget(sub.id, parseFloat(budgetInputs[sub.id] || '0'), selectedMonth)}
+                                                onClick={() => onAddBudget(sub.id, parseFloat(budgetInputs[sub.id] || '0'), month)}
                                                 className="px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs"
                                             >
                                                 {getBudgetForCategory(sub.id) ? '↻' : '+'}
@@ -184,17 +187,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                 ))}
             </div>
 
-            {/* Ay Seçici */}
-            <div className="mt-4 p-3 bg-slate-50 rounded-md flex items-center gap-2">
-                <label className="text-sm text-slate-700">Ay:</label>
-                <input
-                    type="month"
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="px-3 py-2 border border-slate-300 rounded-md text-sm"
-                />
-                <span className="text-xs text-slate-500">(YYYY-MM)</span>
-            </div>
+            {/* Ay seçici üst ekrana taşındı */}
         </div>
     );
 };
