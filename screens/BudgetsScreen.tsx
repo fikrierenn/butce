@@ -29,7 +29,7 @@ const BudgetsScreen: React.FC<BudgetsScreenProps> = ({
                 onUpdateBudget={onUpdateBudget}
                 onDeleteBudget={onDeleteBudget}
             />
-            <BudgetChart transactions={transactions} categories={categories} />
+            <BudgetChart transactions={transactions} categories={categories} budgets={budgets} />
         </div>
     );
 };
