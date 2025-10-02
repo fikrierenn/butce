@@ -7,12 +7,13 @@ interface CategoryManagerProps {
     categories: Category[]; // Hierarchical
     budgets: Budget[];
     selectedMonth?: string;
+    setSelectedMonth?: (m: string) => void;
     onAddCategory: (category: Omit<Category, 'id' | 'user_id' | 'subcategories'>) => Promise<void>;
     onDeleteCategory: (id: number) => Promise<void>;
     onAddBudget: (categoryId: number, limit: number, month: string) => void;
 }
 
-const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, selectedMonth, onAddCategory, onDeleteCategory, onAddBudget }) => {
+const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, selectedMonth, setSelectedMonth, onAddCategory, onDeleteCategory, onAddBudget }) => {
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryType, setNewCategoryType] = useState<'income' | 'expense'>('expense');
     const [parentId, setParentId] = useState<number | null>(null);
@@ -20,6 +21,11 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
     // Türkçe Açıklama:
     // Üstten gelen ay değeri yoksa, güvenli varsayılan olarak bugünün ayını kullan.
     const month = selectedMonth ?? new Date().toLocaleDateString('en-CA').slice(0,7);
+
+    // Türkçe Açıklama:
+    // Seçili aya ait tüm bütçelerin toplamını hesapla (genel özet için)
+    const monthlyBudgets = budgets.filter(b => !b.month || b.month === month);
+    const totalMonthlyBudget = monthlyBudgets.reduce((sum, b) => sum + (b.limit || 0), 0);
 
     // Türkçe Açıklama:
     // Belirli bir kategori için bütçe var mı kontrol et
@@ -107,8 +113,24 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
             </div>
 
             <div className="mt-6">
+                {/* Ay seçici bu bölümde gösterilir */}
+                <div className="mb-4 p-3 bg-slate-50 rounded-md inline-flex items-center gap-2">
+                    <label className="text-sm text-slate-700">Ay (YYYY-MM):</label>
+                    <input
+                        type="month"
+                        value={month}
+                        onChange={(e) => setSelectedMonth && setSelectedMonth(e.target.value)}
+                        className="px-3 py-2 border border-slate-300 rounded-md text-sm"
+                    />
+                </div>
+                {/* Toplam aylık bütçe özeti */}
+                <div className="mb-3 p-3 bg-indigo-50 border border-indigo-200 rounded-md flex justify-between items-center">
+                    <span className="text-sm font-medium text-indigo-900">Toplam Aylık Bütçe</span>
+                    <span className="text-base font-bold text-indigo-900">{totalMonthlyBudget.toLocaleString('tr-TR')} ₺</span>
+                </div>
+
                 <h3 className="font-semibold text-slate-800 mb-4">📊 Gider Kategorileri ve Aylık Bütçeler</h3>
-                {categories.filter(c => c.type === 'expense').map(parent => (
+                 {categories.filter(c => c.type === 'expense').map(parent => (
                     <div key={parent.id} className="mb-6 border border-slate-200 rounded-lg p-4">
                         <div className="flex justify-between items-center mb-3">
                             <h4 className="font-semibold text-slate-800 text-lg">{parent.name}</h4>
@@ -121,11 +143,18 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                         <div className="mb-4 p-3 bg-slate-50 rounded-md">
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="text-sm font-medium text-slate-700">Aylık Bütçe:</span>
-                                {getBudgetForCategory(parent.id) && (
-                                    <span className="text-sm text-green-600 font-medium">
-                                        Mevcut: {getBudgetForCategory(parent.id)?.limit.toLocaleString('tr-TR')} ₺
-                                    </span>
-                                )}
+                                {(() => {
+                                    // Ana kategori için alt kategorilerin bütçe toplamını göster
+                                    const childrenSum = (parent.subcategories || []).reduce((sum, sub) => {
+                                        const b = getBudgetForCategory(sub.id);
+                                        return sum + (b ? b.limit : 0);
+                                    }, 0);
+                                    return (
+                                        <span className="text-sm text-green-600 font-medium">
+                                            Mevcut (Alt Toplam): {childrenSum.toLocaleString('tr-TR')} ₺
+                                        </span>
+                                    );
+                                })()}
                             </div>
                             <div className="flex items-center gap-2">
                                 <input
