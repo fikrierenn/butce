@@ -15,7 +15,7 @@ interface CategoryManagerProps {
 
 const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, selectedMonth, setSelectedMonth, onAddCategory, onDeleteCategory, onAddBudget }) => {
     const [newCategoryName, setNewCategoryName] = useState('');
-    const [newCategoryType, setNewCategoryType] = useState<'income' | 'expense' | 'allowance'>('expense');
+    const [newCategoryType, setNewCategoryType] = useState<'income' | 'expense'>('expense');
     const [parentId, setParentId] = useState<number | null>(null);
     const [budgetInputs, setBudgetInputs] = useState<{[key: number]: string}>({});
     const [isAddingCategory, setIsAddingCategory] = useState(false); // AJAX loading state
@@ -111,7 +111,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                     >
                         <option value="expense">Gider</option>
                         <option value="income">Gelir</option>
-                        <option value="allowance">Harçlık</option>
                     </select>
                     <button
                         onClick={handleAddCategory}
@@ -231,96 +230,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                     ))}
                 </div>
 
-                {/* Harçlık Kategorileri */}
-                {categories.filter(c => c.type === 'allowance').length > 0 && (
-                    <div className="mb-6">
-                        <h4 className="text-lg font-semibold text-green-700 mb-3">💰 Harçlık Kategorileri</h4>
-                        {categories.filter(c => c.type === 'allowance').map(parent => (
-                            <div key={parent.id} className="mb-6 border border-green-200 rounded-lg p-4 bg-green-50">
-                                <div className="flex justify-between items-center mb-3">
-                                    <h4 className="font-semibold text-green-800 text-lg">{parent.name}</h4>
-                                    <button onClick={() => handleDelete(parent.id, parent.name)} className="text-green-400 hover:text-red-600">
-                                        <TrashIcon />
-                                    </button>
-                                </div>
-
-                                {/* Harçlık bütçe girişi */}
-                                <div className="mb-4 p-3 bg-white rounded-md border border-green-200">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-sm font-medium text-green-700">Aylık Harçlık:</span>
-                                        {(() => {
-                                            // Harçlık için alt kategorilerin bütçe toplamını göster
-                                            const childrenSum = (parent.subcategories || []).reduce((sum, sub) => {
-                                                const b = getBudgetForCategory(sub.id);
-                                                return sum + (b ? b.limit : 0);
-                                            }, 0);
-                                            return (
-                                                <span className="text-sm text-green-600 font-medium">
-                                                    Mevcut (Alt Toplam): {childrenSum.toLocaleString('tr-TR')} ₺
-                                                </span>
-                                            );
-                                        })()}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="number"
-                                            placeholder="Aylık harçlık (₺)"
-                                            value={budgetInputs[parent.id] || ''}
-                                            onChange={(e) => handleBudgetInputChange(parent.id, e.target.value)}
-                                            className="flex-1 px-3 py-2 border border-green-300 rounded-md text-sm"
-                                        />
-                                        <button
-                                            onClick={() => onAddBudget(parent.id, parseFloat(budgetInputs[parent.id] || '0'), month)}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
-                                        >
-                                            {getBudgetForCategory(parent.id) ? 'Güncelle' : 'Kaydet'}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Alt kategoriler */}
-                                {parent.subcategories && parent.subcategories.length > 0 && (
-                                    <div className="space-y-3">
-                                        <h5 className="text-sm font-medium text-green-600">Alt Kategoriler:</h5>
-                                        {parent.subcategories.map(sub => (
-                                            <div key={sub.id} className="flex items-center justify-between p-2 bg-white border border-green-200 rounded-md">
-                                                <div className="flex-1">
-                                                    <span className="text-sm text-green-700">- {sub.name}</span>
-                                                    {getBudgetForCategory(sub.id) && (
-                                                        <span className="ml-2 text-xs text-green-600">
-                                                            ({getBudgetForCategory(sub.id)?.limit.toLocaleString('tr-TR')} ₺/ay)
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="number"
-                                                        placeholder="Harçlık"
-                                                        value={budgetInputs[sub.id] || ''}
-                                                        onChange={(e) => handleBudgetInputChange(sub.id, e.target.value)}
-                                                        className="w-20 px-2 py-1 border border-green-300 rounded text-xs"
-                                                    />
-                                                    <button
-                                                        onClick={() => onAddBudget(sub.id, parseFloat(budgetInputs[sub.id] || '0'), month)}
-                                                        className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
-                                                    >
-                                                        {getBudgetForCategory(sub.id) ? '↻' : '+'}
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleDelete(sub.id, sub.name)} 
-                                                        className="text-green-400 hover:text-red-600"
-                                                    >
-                                                        <TrashIcon />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
+                {/* Harçlık türü kaldırıldı: Harçlıkları gider olarak kullanın */}
 
                 {/* Gelir Kategorileri */}
                 {categories.filter(c => c.type === 'income').length > 0 && (
