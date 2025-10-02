@@ -74,12 +74,26 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
         }
     }
 
-    return (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Aylık Bütçeler</h3>
-            {budgetData.length > 0 ? (
+    // Türkçe Açıklama:
+    // Bütçeleri gelir ve gider kategorilerine göre ayır
+    const expenseBudgets = budgetData.filter(b => {
+        const category = flatCategories.find(c => c.id === b.category_id);
+        return category?.type === 'expense';
+    });
+    
+    const incomeBudgets = budgetData.filter(b => {
+        const category = flatCategories.find(c => c.id === b.category_id);
+        return category?.type === 'income';
+    });
+
+    const renderBudgetList = (budgets: typeof budgetData, title: string, color: string) => {
+        if (budgets.length === 0) return null;
+        
+        return (
+            <div className="mb-6">
+                <h4 className={`text-lg font-semibold mb-3 ${color}`}>{title}</h4>
                 <ul className="space-y-4">
-                    {budgetData.map(b => (
+                    {budgets.map(b => (
                         b && <li key={b.id}>
                             <div className="flex justify-between items-center mb-1">
                                 <span className="font-medium text-slate-700">{b.categoryName}</span>
@@ -117,6 +131,18 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
                         </li>
                     ))}
                 </ul>
+            </div>
+        );
+    };
+
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-lg font-bold text-slate-800 mb-4">Aylık Bütçeler</h3>
+            {budgetData.length > 0 ? (
+                <div>
+                    {renderBudgetList(expenseBudgets, "💸 Gider Bütçeleri", "text-red-700")}
+                    {renderBudgetList(incomeBudgets, "📈 Gelir Bütçeleri", "text-blue-700")}
+                </div>
             ) : (
                 <div className="text-center py-6">
                     <p className="text-slate-500">Henüz bütçe oluşturulmamış.</p>
