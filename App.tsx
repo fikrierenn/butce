@@ -340,7 +340,15 @@ const App: React.FC = () => {
             case 'transactions':
                 return <TransactionsScreen accounts={accounts} transactions={transactions} categories={categories} onDeleteTransaction={handleDeleteTransaction} />;
             case 'budgets':
-                return <BudgetsScreen budgets={budgets} transactions={transactions} categories={categories} onUpdateBudget={handleAddOrUpdateBudget} onDeleteBudget={handleDeleteBudget} />;
+                return <BudgetsScreen 
+                    budgets={budgets} 
+                    transactions={transactions} 
+                    categories={categories} 
+                    selectedMonth={selectedMonth}
+                    setSelectedMonth={setSelectedMonth}
+                    onUpdateBudget={handleAddOrUpdateBudget} 
+                    onDeleteBudget={handleDeleteBudget} 
+                />;
             case 'settings':
                 return <SettingsScreen 
                     user={user}
