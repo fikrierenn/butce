@@ -44,7 +44,7 @@ export interface Category {
     id: number;
     user_id: string;
     name: string;
-    type: 'income' | 'expense';
+    type: 'income' | 'expense' | 'allowance'; // Harçlık türü eklendi
     parent_id: number | null;
     subcategories?: Category[]; // For tree structure
 }
