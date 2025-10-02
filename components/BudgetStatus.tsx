@@ -75,62 +75,124 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
     }
 
     // Türkçe Açıklama:
-    // Bütçeleri gelir ve gider kategorilerine göre ayır
-    const expenseBudgets = budgetData.filter(b => {
-        const category = flatCategories.find(c => c.id === b.category_id);
-        return category?.type === 'expense';
-    });
-    
-    const incomeBudgets = budgetData.filter(b => {
-        const category = flatCategories.find(c => c.id === b.category_id);
-        return category?.type === 'income';
-    });
+    // Bütçeleri ana kategorilere göre grupla ve hiyerarşik göster
+    const groupedBudgets = useMemo(() => {
+        const grouped: { [key: string]: { parent: Category, budgets: typeof budgetData } } = {};
+        
+        budgetData.forEach(budget => {
+            const category = flatCategories.find(c => c.id === budget.category_id);
+            if (!category) return;
+            
+            // Ana kategoriyi bul (parent_id null olan)
+            let parentCategory = category;
+            if (category.parent_id) {
+                parentCategory = flatCategories.find(c => c.id === category.parent_id) || category;
+            }
+            
+            const groupKey = `${parentCategory.type}-${parentCategory.id}`;
+            if (!grouped[groupKey]) {
+                grouped[groupKey] = { parent: parentCategory, budgets: [] };
+            }
+            grouped[groupKey].budgets.push(budget);
+        });
+        
+        return grouped;
+    }, [budgetData, flatCategories]);
 
-    const renderBudgetList = (budgets: typeof budgetData, title: string, color: string) => {
-        if (budgets.length === 0) return null;
+    const renderBudgetGroup = (groupKey: string, group: { parent: Category, budgets: typeof budgetData }, color: string) => {
+        if (group.budgets.length === 0) return null;
+        
+        // Ana kategori bütçesi var mı kontrol et
+        const parentBudget = group.budgets.find(b => b.category_id === group.parent.id);
+        const subBudgets = group.budgets.filter(b => b.category_id !== group.parent.id);
         
         return (
-            <div className="mb-6">
-                <h4 className={`text-lg font-semibold mb-3 ${color}`}>{title}</h4>
-                <ul className="space-y-4">
-                    {budgets.map(b => (
-                        b && <li key={b.id}>
-                            <div className="flex justify-between items-center mb-1">
-                                <span className="font-medium text-slate-700">{b.categoryName}</span>
-                                {editingBudgetId === b.id ? (
-                                    <div className="flex items-center space-x-2">
-                                        <input 
-                                            type="number"
-                                            value={newLimit}
-                                            onChange={(e) => setNewLimit(e.target.value)}
-                                            className="w-24 text-right px-2 py-1 border border-slate-300 rounded-md text-sm"
-                                        />
-                                        <button onClick={() => handleSave(b.id)} className="text-indigo-600 text-sm font-semibold">Kaydet</button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center space-x-3">
-                                        <span className="text-sm text-slate-500 cursor-pointer" onClick={() => handleEdit(b)}>{formatCurrency(b.spent)} / {formatCurrency(b.limit)}</span>
-                                        <button onClick={() => handleDelete(b.id)} className="text-slate-400 hover:text-red-600">
-                                            <TrashIcon />
-                                        </button>
-                                    </div>
+            <div key={groupKey} className="mb-6 border border-slate-200 rounded-lg p-4">
+                <h4 className={`text-lg font-semibold mb-3 ${color}`}>
+                    {group.parent.type === 'expense' ? '💸' : '📈'} {group.parent.name}
+                </h4>
+                
+                {/* Ana kategori bütçesi */}
+                {parentBudget && (
+                    <div className="mb-4 p-3 bg-slate-50 rounded-md">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="font-medium text-slate-700">{parentBudget.categoryName}</span>
+                            {editingBudgetId === parentBudget.id ? (
+                                <div className="flex items-center space-x-2">
+                                    <input 
+                                        type="number"
+                                        value={newLimit}
+                                        onChange={(e) => setNewLimit(e.target.value)}
+                                        className="w-24 text-right px-2 py-1 border border-slate-300 rounded-md text-sm"
+                                    />
+                                    <button onClick={() => handleSave(parentBudget.id)} className="text-indigo-600 text-sm font-semibold">Kaydet</button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center space-x-3">
+                                    <span className="text-sm text-slate-500 cursor-pointer" onClick={() => handleEdit(parentBudget)}>{formatCurrency(parentBudget.spent)} / {formatCurrency(parentBudget.limit)}</span>
+                                    <button onClick={() => handleDelete(parentBudget.id)} className="text-slate-400 hover:text-red-600">
+                                        <TrashIcon />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-2.5">
+                            <div 
+                                className={`h-2.5 rounded-full ${parentBudget.percentage > 90 ? 'bg-red-500' : parentBudget.percentage > 75 ? 'bg-yellow-500' : 'bg-indigo-600'}`}
+                                style={{ width: `${parentBudget.percentage}%` }}
+                            ></div>
+                        </div>
+                        {parentBudget.remaining < 0 && (
+                            <p className="text-xs text-red-600 mt-1 flex items-center">
+                                <ExclamationIcon className="h-4 w-4 mr-1" />
+                                Bütçeyi {formatCurrency(Math.abs(parentBudget.remaining))} aştınız.
+                            </p>
+                        )}
+                    </div>
+                )}
+                
+                {/* Alt kategori bütçeleri */}
+                {subBudgets.length > 0 && (
+                    <div className="space-y-3">
+                        <h5 className="text-sm font-medium text-slate-600">Alt Kategoriler:</h5>
+                        {subBudgets.map(b => (
+                            <div key={b.id} className="flex items-center justify-between p-2 bg-white border border-slate-200 rounded-md">
+                                <div className="flex-1">
+                                    <span className="text-sm text-slate-700">- {b.categoryName}</span>
+                                </div>
+                                <div className="flex items-center space-x-3">
+                                    {editingBudgetId === b.id ? (
+                                        <div className="flex items-center space-x-2">
+                                            <input 
+                                                type="number"
+                                                value={newLimit}
+                                                onChange={(e) => setNewLimit(e.target.value)}
+                                                className="w-20 text-right px-2 py-1 border border-slate-300 rounded-md text-xs"
+                                            />
+                                            <button onClick={() => handleSave(b.id)} className="text-indigo-600 text-xs font-semibold">Kaydet</button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span className="text-xs text-slate-500 cursor-pointer" onClick={() => handleEdit(b)}>{formatCurrency(b.spent)} / {formatCurrency(b.limit)}</span>
+                                            <button onClick={() => handleDelete(b.id)} className="text-slate-400 hover:text-red-600">
+                                                <TrashIcon />
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="w-16 bg-slate-200 rounded-full h-1.5 ml-2">
+                                    <div 
+                                        className={`h-1.5 rounded-full ${b.percentage > 90 ? 'bg-red-500' : b.percentage > 75 ? 'bg-yellow-500' : 'bg-indigo-600'}`}
+                                        style={{ width: `${b.percentage}%` }}
+                                    ></div>
+                                </div>
+                                {b.remaining < 0 && (
+                                    <ExclamationIcon className="h-3 w-3 text-red-500 ml-1" />
                                 )}
                             </div>
-                            <div className="w-full bg-slate-200 rounded-full h-2.5">
-                                <div 
-                                    className={`h-2.5 rounded-full ${b.percentage > 90 ? 'bg-red-500' : b.percentage > 75 ? 'bg-yellow-500' : 'bg-indigo-600'}`}
-                                    style={{ width: `${b.percentage}%` }}
-                                ></div>
-                            </div>
-                             {b.remaining < 0 && (
-                                <p className="text-xs text-red-600 mt-1 flex items-center">
-                                    <ExclamationIcon className="h-4 w-4 mr-1" />
-                                    Bütçeyi {formatCurrency(Math.abs(b.remaining))} aştınız.
-                                </p>
-                            )}
-                        </li>
-                    ))}
-                </ul>
+                        ))}
+                    </div>
+                )}
             </div>
         );
     };
@@ -140,8 +202,15 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
             <h3 className="text-lg font-bold text-slate-800 mb-4">Aylık Bütçeler</h3>
             {budgetData.length > 0 ? (
                 <div>
-                    {renderBudgetList(expenseBudgets, "💸 Gider Bütçeleri", "text-red-700")}
-                    {renderBudgetList(incomeBudgets, "📈 Gelir Bütçeleri", "text-blue-700")}
+                    {/* Gider kategorileri */}
+                    {Object.entries(groupedBudgets)
+                        .filter(([key]) => key.startsWith('expense-'))
+                        .map(([key, group]) => renderBudgetGroup(key, group, "text-red-700"))}
+                    
+                    {/* Gelir kategorileri */}
+                    {Object.entries(groupedBudgets)
+                        .filter(([key]) => key.startsWith('income-'))
+                        .map(([key, group]) => renderBudgetGroup(key, group, "text-blue-700"))}
                 </div>
             ) : (
                 <div className="text-center py-6">
