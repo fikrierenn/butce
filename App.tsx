@@ -347,6 +347,8 @@ const App: React.FC = () => {
                     accounts={accounts} 
                     categories={categories}
                     budgets={budgets}
+                    selectedMonth={selectedMonth}
+                    setSelectedMonth={setSelectedMonth}
                     onAddAccount={() => setAddAccountModalOpen(true)}
                     onDeleteAccount={handleDeleteAccount}
                     onAddCategory={handleAddCategory}

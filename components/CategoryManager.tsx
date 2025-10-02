@@ -6,6 +6,7 @@ import TrashIcon from './icons/TrashIcon';
 interface CategoryManagerProps {
     categories: Category[]; // Hierarchical
     budgets: Budget[];
+    selectedMonth?: string;
     onAddCategory: (category: Omit<Category, 'id' | 'user_id' | 'subcategories'>) => Promise<void>;
     onDeleteCategory: (id: number) => Promise<void>;
     onAddBudget: (categoryId: number, limit: number, month: string) => void;
@@ -16,7 +17,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
     const [newCategoryType, setNewCategoryType] = useState<'income' | 'expense'>('expense');
     const [parentId, setParentId] = useState<number | null>(null);
     const [budgetInputs, setBudgetInputs] = useState<{[key: number]: string}>({});
-    const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toLocaleDateString('en-CA').slice(0,7));
 
     // Türkçe Açıklama:
     // Belirli bir kategori için bütçe var mı kontrol et

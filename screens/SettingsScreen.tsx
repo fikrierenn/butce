@@ -13,6 +13,8 @@ interface SettingsScreenProps {
     accounts: Account[];
     categories: Category[];
     budgets: Budget[];
+    selectedMonth: string;
+    setSelectedMonth: (m: string) => void;
     onAddAccount: () => void;
     onDeleteAccount: (id: number) => Promise<void>;
     onAddCategory: (category: Omit<Category, 'id' | 'user_id'>) => Promise<void>;
@@ -25,6 +27,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
     accounts, 
     categories,
     budgets,
+    selectedMonth,
+    setSelectedMonth,
     onAddAccount,
     onDeleteAccount,
     onAddCategory,
@@ -34,6 +38,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
     return (
         <div className="space-y-6">
             <UserProfile user={user} />
+            {/* Türkçe Açıklama: Ay seçici burada, ekranın üst kısmında tek yerde gösterilir */}
+            <div className="bg-white rounded-lg shadow p-4 flex items-center gap-3">
+                <label className="text-sm text-slate-700">Ay (YYYY-MM):</label>
+                <input
+                    type="month"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="px-3 py-2 border border-slate-300 rounded-md text-sm"
+                />
+            </div>
             <InviteManager />
             <AccountManager 
                 accounts={accounts} 
@@ -43,6 +57,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <CategoryManager 
                 categories={categories}
                 budgets={budgets}
+                selectedMonth={selectedMonth}
                 onAddBudget={onAddBudget}
                 onAddCategory={onAddCategory}
                 onDeleteCategory={onDeleteCategory}
