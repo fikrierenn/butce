@@ -203,47 +203,121 @@ const App: React.FC = () => {
     const handleDeleteTransaction = async (id: number) => {
         if (!user) return;
         
+        // Optimistic update - hemen UI'dan kaldır
+        const transactionToDelete = transactions.find(t => t.id === id);
+        setTransactions(prev => prev.filter(t => t.id !== id));
+        
         const { error } = await supabase.from('but_transactions').delete().match({ id });
+        
         if (error) {
             console.error('Error deleting transaction:', error);
+            // Hata durumunda geri ekle
+            if (transactionToDelete) {
+                setTransactions(prev => [...prev, transactionToDelete]);
+            }
             return;
         }
 
-        await fetchData(user); // Triggers will update balances, so we just refetch
-    }
+        // Account balance'ları güncelle
+        await fetchData(user);
+    };
 
     const handleAddAccount = async (account: Omit<Account, 'id' | 'user_id'>) => {
         if (!user) return;
-        const { error } = await supabase
+        
+        // Optimistic update
+        const tempId = Math.floor(Math.random() * 1_000_000_000);
+        const optimisticAccount: Account = {
+            id: tempId,
+            ...account,
+            user_id: user.id,
+        };
+        
+        setAccounts(prev => [...prev, optimisticAccount]);
+        setAddAccountModalOpen(false);
+        
+        const { data, error } = await supabase
             .from('but_accounts')
-            .insert({ ...account, user_id: user.id });
-        if (error) console.error('Error adding account:', error);
-        else {
-            setAddAccountModalOpen(false);
-            await fetchData(user);
+            .insert({ ...account, user_id: user.id })
+            .select()
+            .single();
+            
+        if (error) {
+            console.error('Error adding account:', error);
+            // Hata durumunda optimistic update'i geri al
+            setAccounts(prev => prev.filter(a => a.id !== tempId));
+            setAddAccountModalOpen(true);
+        } else if (data) {
+            // Gerçek veriyle değiştir
+            setAccounts(prev => prev.map(a => a.id === tempId ? data : a));
         }
     };
     
     const handleDeleteAccount = async (id: number) => {
-         if (!user) return;
+        if (!user) return;
+        
+        // Optimistic update - hemen UI'dan kaldır
+        const accountToDelete = accounts.find(a => a.id === id);
+        setAccounts(prev => prev.filter(a => a.id !== id));
+        
         const { error } = await supabase.from('but_accounts').delete().match({ id, user_id: user.id });
-        if (error) console.error('Error deleting account:', error);
-        else await fetchData(user);
-    }
+        
+        if (error) {
+            console.error('Error deleting account:', error);
+            // Hata durumunda geri ekle
+            if (accountToDelete) {
+                setAccounts(prev => [...prev, accountToDelete]);
+            }
+        }
+    };
 
     const handleAddCategory = async (category: Omit<Category, 'id' | 'user_id' | 'subcategories'>) => {
         if (!user) return;
-        const { error } = await supabase.from('but_categories').insert({ ...category, user_id: user.id });
-        if (error) console.error('Error adding category:', error);
-        else await fetchData(user);
+        
+        // Optimistic update
+        const tempId = Math.floor(Math.random() * 1_000_000_000);
+        const optimisticCategory: Category = {
+            id: tempId,
+            ...category,
+            user_id: user.id,
+            subcategories: [],
+        };
+        
+        setCategories(prev => [...prev, optimisticCategory]);
+        
+        const { data, error } = await supabase
+            .from('but_categories')
+            .insert({ ...category, user_id: user.id })
+            .select()
+            .single();
+            
+        if (error) {
+            console.error('Error adding category:', error);
+            // Hata durumunda optimistic update'i geri al
+            setCategories(prev => prev.filter(c => c.id !== tempId));
+        } else if (data) {
+            // Gerçek veriyle değiştir
+            setCategories(prev => prev.map(c => c.id === tempId ? data : c));
+        }
     };
 
     const handleDeleteCategory = async (id: number) => {
         if (!user) return;
+        
+        // Optimistic update - hemen UI'dan kaldır
+        const categoryToDelete = categories.find(c => c.id === id);
+        setCategories(prev => prev.filter(c => c.id !== id));
+        
         const { error } = await supabase.from('but_categories').delete().match({ id, user_id: user.id });
-        if (error) console.error('Error deleting category:', error);
-        else await fetchData(user);
-    }
+        
+        if (error) {
+            console.error('Error deleting category:', error);
+            // Hata durumunda geri ekle
+            if (categoryToDelete) {
+                setCategories(prev => [...prev, categoryToDelete]);
+            }
+        }
+    };
 
     const handleAddOrUpdateBudget = async (categoryId: number, limit: number, month: string) => {
         if (!user) return;
