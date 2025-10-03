@@ -9,6 +9,7 @@ interface HomeScreenProps {
     accounts: Account[];
     transactions: Transaction[];
     categories: Category[];
+    budgets: Budget[];
     onDeleteTransaction: (id: number) => void;
 }
 
@@ -16,6 +17,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     accounts,
     transactions,
     categories,
+    budgets,
     onDeleteTransaction,
 }) => {
     const recentTransactions = useMemo(() => {
@@ -45,7 +47,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         <div className="space-y-6">
             <BalanceSummary income={income} expense={expense} balance={balance} />
             <AccountSummary accounts={accounts} />
-            <BudgetChart transactions={transactions} categories={categories} />
+            <BudgetChart transactions={transactions} categories={categories} budgets={budgets} />
             <TransactionList
                 transactions={recentTransactions}
                 accounts={accounts}

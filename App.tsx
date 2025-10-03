@@ -336,7 +336,7 @@ const App: React.FC = () => {
     const renderScreen = () => {
         switch (activeScreen) {
             case 'home':
-                return <HomeScreen accounts={accounts} transactions={transactions} categories={categories} onDeleteTransaction={handleDeleteTransaction} />;
+                return <HomeScreen accounts={accounts} transactions={transactions} categories={categories} budgets={budgets} onDeleteTransaction={handleDeleteTransaction} />;
             case 'transactions':
                 return <TransactionsScreen accounts={accounts} transactions={transactions} categories={categories} onDeleteTransaction={handleDeleteTransaction} />;
             case 'budgets':
