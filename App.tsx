@@ -169,6 +169,17 @@ const App: React.FC = () => {
     const handleAddTransaction = async (transaction: Omit<Transaction, 'id' | 'user_id' | 'created_at'>) => {
         if (!user) return;
         
+        // Optimistic update - hemen UI'da göster
+        const tempId = Math.floor(Math.random() * 1_000_000_000);
+        const optimisticTransaction: Transaction = {
+            id: tempId,
+            ...transaction,
+            user_id: user.id,
+            created_at: new Date().toISOString(),
+        };
+        
+        setTransactions(prev => [optimisticTransaction, ...prev]);
+        
         const { data, error } = await supabase
             .from('but_transactions')
             .insert({ ...transaction, user_id: user.id })
@@ -177,10 +188,16 @@ const App: React.FC = () => {
 
         if (error || !data) {
             console.error('Error adding transaction:', error);
+            // Hata durumunda optimistic update'i geri al
+            setTransactions(prev => prev.filter(t => t.id !== tempId));
             return;
         }
 
-        await fetchData(user); // Triggers will update balances, so we just refetch
+        // Gerçek veriyle değiştir
+        setTransactions(prev => prev.map(t => t.id === tempId ? data : t));
+        
+        // Account balance'ları güncelle
+        await fetchData(user);
     };
     
     const handleDeleteTransaction = async (id: number) => {
