@@ -52,9 +52,26 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug
 
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/spendme.apk
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: spendme-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/spendme.apk
           retention-days: 30
+
+      - name: Create/Update Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: SpendMe Latest
+          body: |
+            SpendMe en son sürüm.
+            Otomatik olarak oluşturuldu.
+          files: android/app/build/outputs/apk/debug/spendme.apk
+          make_latest: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

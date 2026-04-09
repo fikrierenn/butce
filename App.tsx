@@ -17,6 +17,7 @@ import AddAccountModal from './components/AddAccountModal';
 import EditAccountModal from './components/EditAccountModal';
 import EditTransactionModal from './components/EditTransactionModal';
 import InstallPWAButton from './components/InstallPWAButton';
+import UpdateBanner from './components/UpdateBanner';
 import SpendMeLogo from './components/icons/SpendMeLogo';
 
 const App: React.FC = () => {
@@ -922,6 +923,7 @@ const App: React.FC = () => {
                 />
             )}
             <InstallPWAButton />
+            <UpdateBanner />
         </div>
     );
 };
