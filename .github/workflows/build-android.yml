@@ -57,8 +57,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          VERSION=$(node -p "require('./package.json').version")
           git add public/version.json
-          git diff --cached --quiet || git commit -m "chore: auto-update version.json to $(node -p \"require('./package.json').version\")"
+          git diff --cached --quiet || git commit -m "chore: auto-update version.json to $VERSION"
           git push || true
 
       - name: Add Android platform
