@@ -73,9 +73,10 @@ const InviteManager: React.FC = () => {
         }
     };
 
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text).then(() => {
-            const code = text.split('invite=')[1];
+    const copyToClipboard = (inviteUrl: string) => {
+        const fullUrl = window.location.origin + inviteUrl;
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            const code = inviteUrl.split('invite=')[1];
             setCopiedCode(code);
             setTimeout(() => setCopiedCode(null), 2000);
         });
