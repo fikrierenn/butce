@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Account, Budget, Category, RecurringTransaction, Transaction } from '../types';
 import { User } from '@supabase/supabase-js';
 import { useI18n, SUPPORTED_CURRENCIES } from '../lib/i18n';
-import { getAppVersion } from '../lib/updateChecker';
+import { getAppVersion, checkForUpdate } from '../lib/updateChecker';
 import SpendMeLogo from '../components/icons/SpendMeLogo';
 import AccountManager from '../components/AccountManager';
 import CategoryManager from '../components/CategoryManager';
@@ -11,6 +11,77 @@ import UserProfile from '../components/UserProfile';
 import RecurringManager from '../components/RecurringManager';
 import AddRecurringModal from '../components/AddRecurringModal';
 import ExportImport from '../components/ExportImport';
+
+const VersionCard: React.FC = () => {
+    const [updateStatus, setUpdateStatus] = useState<'checking' | 'available' | 'latest' | 'error'>('checking');
+    const [newVersion, setNewVersion] = useState('');
+    const [apkUrl, setApkUrl] = useState('');
+    const [releaseNotes, setReleaseNotes] = useState('');
+
+    useEffect(() => {
+        const check = async () => {
+            const result = await checkForUpdate();
+            if (result.hasUpdate && result.versionInfo) {
+                setUpdateStatus('available');
+                setNewVersion(result.versionInfo.version);
+                setApkUrl(result.versionInfo.apkUrl);
+                setReleaseNotes(result.versionInfo.releaseNotes);
+            } else if (result.versionInfo) {
+                setUpdateStatus('latest');
+            } else {
+                setUpdateStatus('error');
+            }
+        };
+        check();
+    }, []);
+
+    return (
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-card dark:shadow-none border border-slate-100/60 dark:border-slate-700/60 p-5">
+            <div className="flex flex-col items-center text-center">
+                <SpendMeLogo size={40} />
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 mt-2">SpendMe</p>
+                <p className="text-xs text-slate-400 mt-0.5">v{getAppVersion()}</p>
+
+                {updateStatus === 'checking' && (
+                    <p className="text-xs text-slate-400 mt-3 animate-pulse">Güncelleme kontrol ediliyor...</p>
+                )}
+
+                {updateStatus === 'latest' && (
+                    <div className="mt-3 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">✓ En güncel sürüm</p>
+                    </div>
+                )}
+
+                {updateStatus === 'available' && (
+                    <div className="mt-3 w-full">
+                        <div className="px-3 py-2 bg-orange-50 dark:bg-orange-900/20 rounded-xl mb-2">
+                            <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                                🚀 Yeni sürüm mevcut: v{newVersion}
+                            </p>
+                            {releaseNotes && (
+                                <p className="text-[11px] text-orange-500 mt-0.5">{releaseNotes}</p>
+                            )}
+                        </div>
+                        <a
+                            href={apkUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 transition-colors text-center shadow-sm"
+                        >
+                            Güncelle (v{newVersion})
+                        </a>
+                    </div>
+                )}
+
+                {updateStatus === 'error' && (
+                    <p className="text-xs text-slate-400 mt-3">Güncelleme kontrol edilemedi</p>
+                )}
+
+                <p className="text-[11px] text-slate-300 dark:text-slate-600 mt-3">Yapay zeka destekli kişisel finans</p>
+            </div>
+        </div>
+    );
+};
 
 interface SettingsScreenProps {
     user: User | null;
@@ -116,15 +187,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 accounts={accounts}
                 categories={categories}
             />
-            {/* Uygulama Bilgisi */}
-            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-card dark:shadow-none border border-slate-100/60 dark:border-slate-700/60 p-5">
-                <div className="flex flex-col items-center text-center">
-                    <SpendMeLogo size={40} />
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 mt-2">SpendMe</p>
-                    <p className="text-xs text-slate-400 mt-0.5">v{getAppVersion()}</p>
-                    <p className="text-[11px] text-slate-300 dark:text-slate-600 mt-3">Yapay zeka destekli kişisel finans</p>
-                </div>
-            </div>
+            {/* Uygulama Bilgisi + Güncelleme Kontrolü */}
+            <VersionCard />
 
             {isAddRecurringOpen && (
                 <AddRecurringModal
