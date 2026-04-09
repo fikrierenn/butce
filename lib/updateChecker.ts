@@ -26,15 +26,24 @@ export const checkForUpdate = async (): Promise<{
     versionInfo: VersionInfo | null;
 }> => {
     try {
-        const res = await fetch(VERSION_CHECK_URL + '?t=' + Date.now());
-        if (!res.ok) return { hasUpdate: false, forceUpdate: false, versionInfo: null };
+        const res = await fetch(VERSION_CHECK_URL + '?t=' + Date.now(), {
+            cache: 'no-store',
+            mode: 'cors',
+        });
+        if (!res.ok) {
+            console.log('Update check failed:', res.status);
+            return { hasUpdate: false, forceUpdate: false, versionInfo: null };
+        }
 
         const info: VersionInfo = await res.json();
+        console.log('Update check:', { current: APP_VERSION, remote: info.version });
+
         const hasUpdate = compareVersions(APP_VERSION, info.version) > 0;
         const forceUpdate = info.forceUpdate || compareVersions(APP_VERSION, info.minVersion) > 0;
 
         return { hasUpdate, forceUpdate, versionInfo: info };
-    } catch {
+    } catch (e) {
+        console.error('Update check error:', e);
         return { hasUpdate: false, forceUpdate: false, versionInfo: null };
     }
 };

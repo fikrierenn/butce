@@ -64,6 +64,10 @@ jobs:
           rsvg-convert -w 72 -h 72 assets/icon.svg -o android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
           rsvg-convert -w 96 -h 96 assets/icon.svg -o android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
           rsvg-convert -w 144 -h 144 assets/icon.svg -o android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+
+          # Adaptive icon XML'i kaldır - doğrudan PNG kullanılsın
+          rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
           rsvg-convert -w 192 -h 192 assets/icon.svg -o android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
 
       - name: Fix Kotlin stdlib conflict
