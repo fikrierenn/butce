@@ -59,14 +59,12 @@ const UpdateBanner: React.FC = () => {
                                 Sonra
                             </button>
                         )}
-                        <a
-                            href={apkUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <button
+                            onClick={() => window.open(apkUrl, '_system')}
                             className="flex-1 px-3 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 transition-colors text-center shadow-sm"
                         >
                             Güncelle
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>

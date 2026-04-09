@@ -62,14 +62,12 @@ const VersionCard: React.FC = () => {
                                 <p className="text-[11px] text-orange-500 mt-0.5">{releaseNotes}</p>
                             )}
                         </div>
-                        <a
-                            href={apkUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <button
+                            onClick={() => window.open(apkUrl, '_system')}
                             className="block w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 transition-colors text-center shadow-sm"
                         >
                             Güncelle (v{newVersion})
-                        </a>
+                        </button>
                     </div>
                 )}
 
