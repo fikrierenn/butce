@@ -41,6 +41,31 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Generate app icons
+        run: |
+          sudo apt-get install -y librsvg2-bin
+
+          # Generate launcher icons
+          rsvg-convert -w 48 -h 48 assets/icon.svg -o android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          rsvg-convert -w 72 -h 72 assets/icon.svg -o android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          rsvg-convert -w 96 -h 96 assets/icon.svg -o android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          rsvg-convert -w 144 -h 144 assets/icon.svg -o android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          rsvg-convert -w 192 -h 192 assets/icon.svg -o android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+
+          # Round icons (same as regular for now)
+          cp android/app/src/main/res/mipmap-mdpi/ic_launcher.png android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-hdpi/ic_launcher.png android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-xhdpi/ic_launcher.png android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+
+          # Foreground icons (for adaptive icons)
+          rsvg-convert -w 48 -h 48 assets/icon.svg -o android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
+          rsvg-convert -w 72 -h 72 assets/icon.svg -o android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+          rsvg-convert -w 96 -h 96 assets/icon.svg -o android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+          rsvg-convert -w 144 -h 144 assets/icon.svg -o android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+          rsvg-convert -w 192 -h 192 assets/icon.svg -o android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+
       - name: Fix Kotlin stdlib conflict
         run: |
           sed -i '/^dependencies {/i configurations.all {\n    exclude group: '\''org.jetbrains.kotlin'\'', module: '\''kotlin-stdlib-jdk7'\''\n    exclude group: '\''org.jetbrains.kotlin'\'', module: '\''kotlin-stdlib-jdk8'\''\n}' android/app/build.gradle
