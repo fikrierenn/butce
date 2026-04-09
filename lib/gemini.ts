@@ -1,7 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Account, Category, TransactionType } from "../types";
 
-const genAI = new GoogleGenerativeAI("AIzaSyCJqJHQLNX5tyKyCCtnWWZJgkK-eAXGiQY");
+const apiKey = process.env.GEMINI_API_KEY || '';
+if (!apiKey) console.error('GEMINI_API_KEY .env dosyasında tanımlanmalı!');
+
+const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
 // Gemini yanıtından markdown code block'larını temizle
