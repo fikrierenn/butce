@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { checkForUpdate, getAppVersion } from '../lib/updateChecker';
+import { downloadUpdate } from '../lib/appUpdate';
 
 const UpdateBanner: React.FC = () => {
     const [showBanner, setShowBanner] = useState(false);
@@ -60,7 +61,7 @@ const UpdateBanner: React.FC = () => {
                             </button>
                         )}
                         <button
-                            onClick={() => window.open(apkUrl, '_system')}
+                            onClick={() => downloadUpdate(apkUrl)}
                             className="flex-1 px-3 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 transition-colors text-center shadow-sm"
                         >
                             Güncelle

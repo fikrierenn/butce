@@ -3,6 +3,7 @@ import { Account, Budget, Category, RecurringTransaction, Transaction } from '..
 import { User } from '@supabase/supabase-js';
 import { useI18n, SUPPORTED_CURRENCIES } from '../lib/i18n';
 import { getAppVersion, checkForUpdate } from '../lib/updateChecker';
+import { downloadUpdate } from '../lib/appUpdate';
 import SpendMeLogo from '../components/icons/SpendMeLogo';
 import AccountManager from '../components/AccountManager';
 import CategoryManager from '../components/CategoryManager';
@@ -63,7 +64,7 @@ const VersionCard: React.FC = () => {
                             )}
                         </div>
                         <button
-                            onClick={() => window.open(apkUrl, '_system')}
+                            onClick={() => downloadUpdate(apkUrl)}
                             className="block w-full py-2.5 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 transition-colors text-center shadow-sm"
                         >
                             Güncelle (v{newVersion})
