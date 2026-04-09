@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Account, Budget, Category, RecurringTransaction, Transaction } from '../types';
 import { User } from '@supabase/supabase-js';
 import { useI18n, SUPPORTED_CURRENCIES } from '../lib/i18n';
+import { getAppVersion } from '../lib/updateChecker';
+import SpendMeLogo from '../components/icons/SpendMeLogo';
 import AccountManager from '../components/AccountManager';
 import CategoryManager from '../components/CategoryManager';
 import InviteManager from '../components/InviteManager';
@@ -114,6 +116,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 accounts={accounts}
                 categories={categories}
             />
+            {/* Uygulama Bilgisi */}
+            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-card dark:shadow-none border border-slate-100/60 dark:border-slate-700/60 p-5">
+                <div className="flex flex-col items-center text-center">
+                    <SpendMeLogo size={40} />
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 mt-2">SpendMe</p>
+                    <p className="text-xs text-slate-400 mt-0.5">v{getAppVersion()}</p>
+                    <p className="text-[11px] text-slate-300 dark:text-slate-600 mt-3">Yapay zeka destekli kişisel finans</p>
+                </div>
+            </div>
+
             {isAddRecurringOpen && (
                 <AddRecurringModal
                     isOpen={isAddRecurringOpen}
