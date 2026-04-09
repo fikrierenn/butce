@@ -1,8 +1,8 @@
 {
-  "version": "1.0.2",
-  "build": 1,
+  "version": "1.1.1",
+  "build": 22,
   "minVersion": "1.0.0",
-  "releaseNotes": "SpendMe v1 - İlk sürüm!",
-  "apkUrl": "https://github.com/fikrierenn/butce/releases/latest/download/spendme.apk",
+  "releaseNotes": "SpendMe v1.1.1",
+  "apkUrl": "https://github.com/fikrierenn/butce/releases/download/latest/spendme.apk",
   "forceUpdate": false
 }
