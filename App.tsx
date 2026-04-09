@@ -1,18 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabaseClient';
-import { Transaction, Account, Category, Budget, TransactionType } from './types';
+import { Transaction, Account, Category, Budget, TransactionType, RecurringTransaction, RecurringFrequency } from './types';
 
 import Auth from './components/Auth';
 import Header from './components/Header';
 import HomeScreen from './screens/HomeScreen';
 import TransactionsScreen from './screens/TransactionsScreen';
 import BudgetsScreen from './screens/BudgetsScreen';
+import ReportsScreen from './screens/ReportsScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import './lib/chartSetup';
 import BottomNavBar from './components/BottomNavBar';
 import TransactionForm from './components/TransactionForm';
 import AddAccountModal from './components/AddAccountModal';
+import EditAccountModal from './components/EditAccountModal';
+import EditTransactionModal from './components/EditTransactionModal';
 import InstallPWAButton from './components/InstallPWAButton';
+import SpendMeLogo from './components/icons/SpendMeLogo';
 
 const App: React.FC = () => {
     const [session, setSession] = useState<Session | null>(null);
@@ -25,13 +30,16 @@ const App: React.FC = () => {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [budgets, setBudgets] = useState<Budget[]>([]);
-    // Türkçe Açıklama:
-    // Bütçeleri ay bazlı yönetmek için seçili ayı YYYY-MM formatında tutuyoruz.
+    const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([]);
     const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toLocaleDateString('en-CA').slice(0, 7));
 
     const [activeScreen, setActiveScreen] = useState('home');
     const [isTransactionFormOpen, setTransactionFormOpen] = useState(false);
     const [isAddAccountModalOpen, setAddAccountModalOpen] = useState(false);
+    const [isEditAccountModalOpen, setEditAccountModalOpen] = useState(false);
+    const [isEditTransactionModalOpen, setEditTransactionModalOpen] = useState(false);
+    const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
     const buildCategoryTree = (categories: Category[]): Category[] => {
         const categoryMap: { [key: number]: Category & { subcategories: Category[] } } = {};
@@ -56,19 +64,21 @@ const App: React.FC = () => {
         
         setLoading(true);
         const [
-            { data: transactionsData, error: tError }, 
-            { data: accountsData, error: aError }, 
+            { data: transactionsData, error: tError },
+            { data: accountsData, error: aError },
             { data: categoriesData, error: cError },
-            { data: budgetsData, error: bError }
+            { data: budgetsData, error: bError },
+            { data: recurringData, error: rError }
         ] = await Promise.all([
             supabase.from('but_transactions').select('*').eq('user_id', currentUser.id).order('date', { ascending: false }).order('created_at', { ascending: false }),
             supabase.from('but_accounts').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }),
             supabase.from('but_categories').select('*').eq('user_id', currentUser.id).order('name'),
-            supabase.from('but_budgets').select('*').eq('user_id', currentUser.id).eq('month', selectedMonth)
+            supabase.from('but_budgets').select('*').eq('user_id', currentUser.id).eq('month', selectedMonth),
+            supabase.from('but_recurring_transactions').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false })
         ]);
-        
-        if (tError || aError || cError || bError) {
-            console.error("Error fetching data:", tError || aError || cError || bError);
+
+        if (tError || aError || cError || bError || rError) {
+            console.error("Error fetching data:", tError || aError || cError || bError || rError);
             setLoading(false);
             return;
         }
@@ -78,7 +88,13 @@ const App: React.FC = () => {
         const categoryTree = buildCategoryTree(categoriesData || []);
         setCategories(categoryTree);
         setBudgets(budgetsData || []);
+        setRecurringTransactions(recurringData || []);
         setLoading(false);
+
+        // Vadesi gelen tekrarlayan işlemleri otomatik oluştur
+        if (recurringData) {
+            await processRecurringTransactions(currentUser, recurringData);
+        }
 
     }, [selectedMonth]);
 
@@ -120,31 +136,6 @@ const App: React.FC = () => {
                         }
                         // URL'den davet kodunu temizle
                         window.history.replaceState({}, document.title, window.location.pathname);
-                    } else {
-                        // Türkçe Açıklama:
-                        // Davet kodu yoksa, kullanıcının izinli olup olmadığını kontrol et
-                        // Not: Eğer fonksiyon yoksa (SQL çalıştırılmadıysa), tüm kullanıcılara izin ver
-                        try {
-                            const { data: isAllowed, error: allowError } = await supabase.rpc('is_user_allowed', {
-                                user_email: currentUser.email
-                            });
-
-                            // Eğer fonksiyon bulunamadıysa (42883 = undefined function), devam et
-                            if (allowError && allowError.code !== '42883') {
-                                console.error('İzin kontrolü hatası:', allowError);
-                            }
-
-                            // Fonksiyon varsa ve kullanıcı izinli değilse
-                            if (!allowError && !isAllowed) {
-                                setNeedsInviteCode(true);
-                                await supabase.auth.signOut();
-                                setLoading(false);
-                                return;
-                            }
-                        } catch (err) {
-                            // Hata varsa logla ama uygulamayı çalıştırmaya devam et
-                            console.warn('İzin kontrolü atlandı:', err);
-                        }
                     }
 
                     const { error } = await supabase.rpc('add_initial_categories');
@@ -156,6 +147,7 @@ const App: React.FC = () => {
                     setAccounts([]);
                     setCategories([]);
                     setBudgets([]);
+                    setRecurringTransactions([]);
                 }
             }
         );
@@ -166,56 +158,345 @@ const App: React.FC = () => {
         await supabase.auth.signOut();
     };
     
-    const handleAddTransaction = async (transaction: Omit<Transaction, 'id' | 'user_id' | 'created_at'>) => {
-        if (!user) return;
+    const handleEditAccount = (account: Account) => {
+        setEditingAccount(account);
+        setEditAccountModalOpen(true);
+    };
+    
+    const handleUpdateAccount = async (account: Omit<Account, 'id' | 'user_id'>) => {
+        if (!user || !editingAccount) return;
         
-        // Optimistic update - hemen UI'da göster
-        const tempId = Math.floor(Math.random() * 1_000_000_000);
-        const optimisticTransaction: Transaction = {
-            id: tempId,
-            ...transaction,
-            user_id: user.id,
-            created_at: new Date().toISOString(),
-        };
+        // Optimistic update
+        setAccounts(prev => prev.map(a => a.id === editingAccount.id ? { ...a, ...account } : a));
+        setEditAccountModalOpen(false);
+        setEditingAccount(null);
         
-        setTransactions(prev => [optimisticTransaction, ...prev]);
-        
-        const { data, error } = await supabase
-            .from('but_transactions')
-            .insert({ ...transaction, user_id: user.id })
-            .select()
-            .single();
-
-        if (error || !data) {
-            console.error('Error adding transaction:', error);
+        const { error } = await supabase
+            .from('but_accounts')
+            .update(account)
+            .match({ id: editingAccount.id, user_id: user.id });
+            
+        if (error) {
+            console.error('Error updating account:', error);
             // Hata durumunda optimistic update'i geri al
-            setTransactions(prev => prev.filter(t => t.id !== tempId));
+            setAccounts(prev => prev.map(a => a.id === editingAccount.id ? editingAccount : a));
+            setEditAccountModalOpen(true);
+            setEditingAccount(editingAccount);
+        }
+    };
+    
+    const handleEditTransaction = (transaction: Transaction) => {
+        setEditingTransaction(transaction);
+        setEditTransactionModalOpen(true);
+    };
+    
+    const handleUpdateTransaction = async (transaction: Omit<Transaction, 'id' | 'user_id' | 'created_at'>) => {
+        if (!user || !editingTransaction) return;
+
+        // Eğer taksitli bir işlem düzenleniyorsa tüm seriyi güncelle
+        const isSeries = (editingTransaction.is_installment && editingTransaction.installment_count) || (transaction.is_installment && transaction.installment_count);
+        if (isSeries) {
+            // 1) Eski seriyi topla (parent_id varsa ona göre)
+            const series = transactions.filter(t => {
+                if (editingTransaction.installment_parent_id) {
+                    return t.installment_parent_id === editingTransaction.installment_parent_id;
+                }
+                return (
+                    t.is_installment &&
+                    t.installment_count === editingTransaction.installment_count &&
+                    t.description.includes(editingTransaction.description.split(' (')[0])
+                );
+            });
+
+            // 2) Optimistic olarak eski seriyi kaldır
+            const backupSeries = series.map(s => ({ ...s }));
+            setTransactions(prev => prev.filter(t => !series.some(s => s.id === t.id)));
+
+            // 3) Eski seriyi DB'den sil
+            const { error: delErr } = await supabase
+                .from('but_transactions')
+                .delete()
+                .in('id', series.map(s => s.id));
+            if (delErr) {
+                console.error('Error deleting old series:', delErr);
+                setTransactions(prev => [...prev, ...backupSeries]);
+                return;
+            }
+
+            // 4) Yeni seriyi üret (2 hane yuvarla)
+            const count = transaction.installment_count || editingTransaction.installment_count || 1;
+            const baseAmount = transaction.amount;
+            const toTwo = (n: number) => Number(n.toFixed(2));
+            const perAmount = toTwo(baseAmount / count);
+
+            const newSeries: Omit<Transaction, 'id' | 'user_id' | 'created_at'>[] = [];
+            for (let i = 1; i <= count; i++) {
+                const d = new Date(transaction.date);
+                d.setMonth(d.getMonth() + i - 1);
+                newSeries.push({
+                    ...transaction,
+                    amount: perAmount,
+                    description: `${transaction.description} (${i}/${count})`,
+                    date: d.toISOString().split('T')[0],
+                    installment_current: i,
+                    is_installment: true,
+                    installment_count: count,
+                    installment_parent_id: null,
+                });
+            }
+
+            // 5) Optimistic ekle
+            const tempIds = newSeries.map(() => Math.floor(Math.random() * 1_000_000_000));
+            const optimistic = newSeries.map((n, idx) => ({
+                id: tempIds[idx],
+                ...n,
+                user_id: user.id,
+                created_at: new Date().toISOString(),
+            } as Transaction));
+            setTransactions(prev => [...optimistic, ...prev]);
+
+            // 6) DB'ye ekle ve parent id ata
+            const { data, error: insErr } = await supabase
+                .from('but_transactions')
+                .insert(newSeries.map(n => ({ ...n, user_id: user.id })))
+                .select();
+            if (insErr || !data) {
+                console.error('Error inserting new series:', insErr);
+                setTransactions(prev => prev.filter(t => !tempIds.includes(t.id)));
+                // Eski seriyi geri yükle
+                setTransactions(prev => [...backupSeries, ...prev]);
+                return;
+            }
+
+            const parentId = data[0]?.id;
+            if (parentId) {
+                await supabase
+                    .from('but_transactions')
+                    .update({ installment_parent_id: parentId })
+                    .in('id', data.map((d: any) => d.id));
+            }
+
+            // optimistic -> gerçek id'lerle değiştir
+            setTransactions(prev => {
+                const arr = [...prev];
+                data.forEach((real: any, index: number) => {
+                    const i = arr.findIndex(t => t.id === tempIds[index]);
+                    if (i !== -1) arr[i] = real;
+                });
+                return arr;
+            });
+
+            setEditTransactionModalOpen(false);
+            setEditingTransaction(null);
+            await fetchData(user);
             return;
         }
 
-        // Gerçek veriyle değiştir
-        setTransactions(prev => prev.map(t => t.id === tempId ? data : t));
+        // Tekil işlem güncelleme
+        const backup = editingTransaction;
+        setTransactions(prev => prev.map(t => t.id === editingTransaction.id ? { ...t, ...transaction } : t));
+        const { error } = await supabase
+            .from('but_transactions')
+            .update(transaction)
+            .match({ id: editingTransaction.id, user_id: user.id });
+        if (error) {
+            console.error('Error updating transaction:', error);
+            setTransactions(prev => prev.map(t => t.id === editingTransaction.id ? backup : t));
+            return;
+        }
+        setEditTransactionModalOpen(false);
+        setEditingTransaction(null);
+        await fetchData(user);
+    };
+    
+    const handleAddTransaction = async (transaction: Omit<Transaction, 'id' | 'user_id' | 'created_at'>) => {
+        if (!user) return;
+        
+        // Taksitli işlem ise özel handling
+        if (transaction.is_installment && transaction.installment_count && transaction.installment_count >= 1) {
+            // Taksitli işlemler için batch insert
+            const installmentTransactions: Omit<Transaction, 'id' | 'user_id' | 'created_at'>[] = [];
+            const toTwo = (n: number) => Number(n.toFixed(2));
+            const installmentAmount = toTwo(transaction.amount / transaction.installment_count);
+            
+            for (let i = 1; i <= transaction.installment_count; i++) {
+                const installmentDate = new Date(transaction.date);
+                installmentDate.setMonth(installmentDate.getMonth() + i - 1);
+                
+                installmentTransactions.push({
+                    ...transaction,
+                    amount: installmentAmount,
+                    description: `${transaction.description} (${i}/${transaction.installment_count})`,
+                    date: installmentDate.toISOString().split('T')[0],
+                    installment_current: i,
+                });
+            }
+            
+            // Optimistic update - tüm taksitleri ekle
+            const tempIds = installmentTransactions.map(() => Math.floor(Math.random() * 1_000_000_000));
+            const optimisticTransactions: Transaction[] = installmentTransactions.map((t, index) => ({
+                id: tempIds[index],
+                ...t,
+                user_id: user.id,
+                created_at: new Date().toISOString(),
+            }));
+            
+            setTransactions(prev => [...optimisticTransactions, ...prev]);
+            
+            // Batch insert
+            const { data, error } = await supabase
+                .from('but_transactions')
+                .insert(installmentTransactions.map(t => ({ ...t, user_id: user.id })))
+                .select();
+            
+            if (error || !data) {
+                console.error('Error adding installment transactions:', error);
+                // Hata durumunda optimistic update'i geri al
+                setTransactions(prev => prev.filter(t => !tempIds.includes(t.id)));
+                return;
+            }
+            
+            // Gerçek verilerle değiştir ve parent id ata
+            // Parent olarak ilk taksidin id'sini kullan
+            const parentId = data[0]?.id;
+            if (parentId) {
+                await supabase.from('but_transactions')
+                    .update({ installment_parent_id: parentId })
+                    .in('id', data.map((d: any) => d.id));
+            }
+
+            setTransactions(prev => {
+                const newTransactions = [...prev];
+                data.forEach((realTransaction, index) => {
+                    const optimisticIndex = newTransactions.findIndex(t => t.id === tempIds[index]);
+                    if (optimisticIndex !== -1) {
+                        newTransactions[optimisticIndex] = realTransaction;
+                    }
+                });
+                return newTransactions;
+            });
+            
+        } else {
+            // Normal işlem için mevcut kod
+            const tempId = Math.floor(Math.random() * 1_000_000_000);
+            const optimisticTransaction: Transaction = {
+                id: tempId,
+                ...transaction,
+                user_id: user.id,
+                created_at: new Date().toISOString(),
+            };
+            
+            setTransactions(prev => [optimisticTransaction, ...prev]);
+            
+            const { data, error } = await supabase
+                .from('but_transactions')
+                .insert({ ...transaction, user_id: user.id })
+                .select()
+                .single();
+
+            if (error || !data) {
+                console.error('Error adding transaction:', error);
+                // Hata durumunda optimistic update'i geri al
+                setTransactions(prev => prev.filter(t => t.id !== tempId));
+                return;
+            }
+
+            // Gerçek veriyle değiştir
+            setTransactions(prev => prev.map(t => t.id === tempId ? data : t));
+        }
         
         // Account balance'ları güncelle
         await fetchData(user);
     };
-    
+
+    const handleAddMultipleTransactions = async (transactionsList: Omit<Transaction, 'id' | 'user_id' | 'created_at'>[]) => {
+        if (!user || transactionsList.length === 0) return;
+
+        // Optimistic update
+        const tempIds = transactionsList.map(() => Math.floor(Math.random() * 1_000_000_000));
+        const optimisticTransactions: Transaction[] = transactionsList.map((t, i) => ({
+            id: tempIds[i],
+            ...t,
+            user_id: user.id,
+            created_at: new Date().toISOString(),
+        }));
+        setTransactions(prev => [...optimisticTransactions, ...prev]);
+
+        // Batch insert
+        const { data, error } = await supabase
+            .from('but_transactions')
+            .insert(transactionsList.map(t => ({ ...t, user_id: user.id })))
+            .select();
+
+        if (error || !data) {
+            console.error('Error adding batch transactions:', error);
+            setTransactions(prev => prev.filter(t => !tempIds.includes(t.id)));
+            return;
+        }
+
+        // Replace optimistic with real data
+        setTransactions(prev => {
+            const updated = [...prev];
+            data.forEach((real: any, index: number) => {
+                const i = updated.findIndex(t => t.id === tempIds[index]);
+                if (i !== -1) updated[i] = real;
+            });
+            return updated;
+        });
+
+        await fetchData(user);
+    };
+
     const handleDeleteTransaction = async (id: number) => {
         if (!user) return;
         
-        // Optimistic update - hemen UI'dan kaldır
         const transactionToDelete = transactions.find(t => t.id === id);
-        setTransactions(prev => prev.filter(t => t.id !== id));
+        if (!transactionToDelete) return;
         
-        const { error } = await supabase.from('but_transactions').delete().match({ id });
-        
-        if (error) {
-            console.error('Error deleting transaction:', error);
-            // Hata durumunda geri ekle
-            if (transactionToDelete) {
-                setTransactions(prev => [...prev, transactionToDelete]);
+        // Taksitli işlem ise tüm taksitleri sil
+        if (transactionToDelete.is_installment && (transactionToDelete.installment_parent_id || transactionToDelete.installment_count)) {
+            // Parent id varsa ona göre; yoksa açıklama fallback
+            const allInstallments = transactions.filter(t => {
+                if (transactionToDelete.installment_parent_id) {
+                    return t.installment_parent_id === transactionToDelete.installment_parent_id;
+                }
+                return (
+                    t.is_installment &&
+                    t.installment_count === transactionToDelete.installment_count &&
+                    t.description.includes(transactionToDelete.description.split(' (')[0])
+                );
+            });
+            
+            // Optimistic update - tüm taksitleri kaldır
+            setTransactions(prev => prev.filter(t => !allInstallments.some(inst => inst.id === t.id)));
+            
+            // Tüm taksitleri sil
+            const installmentIds = allInstallments.map(t => t.id);
+            const { error } = await supabase
+                .from('but_transactions')
+                .delete()
+                .in('id', installmentIds);
+            
+            if (error) {
+                console.error('Error deleting installment transactions:', error);
+                // Hata durumunda geri ekle
+                setTransactions(prev => [...prev, ...allInstallments]);
+                return;
             }
-            return;
+        } else {
+            // Normal işlem için mevcut kod
+            setTransactions(prev => prev.filter(t => t.id !== id));
+            
+            const { error } = await supabase.from('but_transactions').delete().match({ id });
+            
+            if (error) {
+                console.error('Error deleting transaction:', error);
+                // Hata durumunda geri ekle
+                if (transactionToDelete) {
+                    setTransactions(prev => [...prev, transactionToDelete]);
+                }
+                return;
+            }
         }
 
         // Account balance'ları güncelle
@@ -364,8 +645,104 @@ const App: React.FC = () => {
         else await fetchData(user);
     }
 
+    // Tekrarlayan işlemleri otomatik çalıştır
+    const processRecurringTransactions = async (currentUser: User, recurrings: RecurringTransaction[]) => {
+        const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+
+        for (const rec of recurrings) {
+            if (!rec.is_active) continue;
+            if (rec.end_date && rec.end_date < today) continue;
+            if (rec.next_run_date > today) continue;
+
+            // Bu tarih için işlem oluştur
+            const txData: any = {
+                user_id: currentUser.id,
+                type: rec.type,
+                amount: rec.amount,
+                description: rec.description,
+                date: rec.next_run_date,
+                category_id: rec.category_id,
+                account_id: rec.account_id,
+                from_account_id: rec.from_account_id,
+                to_account_id: rec.to_account_id,
+            };
+
+            const { error: txError } = await supabase.from('but_transactions').insert(txData);
+            if (txError) {
+                console.error('Recurring transaction error:', txError);
+                continue;
+            }
+
+            // Sonraki çalışma tarihini hesapla
+            const nextDate = new Date(rec.next_run_date);
+            switch (rec.frequency) {
+                case 'daily': nextDate.setDate(nextDate.getDate() + 1); break;
+                case 'weekly': nextDate.setDate(nextDate.getDate() + 7); break;
+                case 'monthly': nextDate.setMonth(nextDate.getMonth() + 1); break;
+                case 'yearly': nextDate.setFullYear(nextDate.getFullYear() + 1); break;
+            }
+            const nextRunDate = nextDate.toLocaleDateString('en-CA');
+
+            await supabase.from('but_recurring_transactions')
+                .update({ last_run_date: rec.next_run_date, next_run_date: nextRunDate })
+                .eq('id', rec.id);
+        }
+    };
+
+    // Tekrarlayan işlem CRUD
+    const handleAddRecurring = async (recurring: Omit<RecurringTransaction, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+        if (!user) return;
+
+        const tempId = Math.floor(Math.random() * 1_000_000_000);
+        const optimistic: RecurringTransaction = {
+            id: tempId, ...recurring, user_id: user.id,
+            created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        };
+        setRecurringTransactions(prev => [optimistic, ...prev]);
+
+        const { data, error } = await supabase
+            .from('but_recurring_transactions')
+            .insert({ ...recurring, user_id: user.id })
+            .select().single();
+
+        if (error) {
+            console.error('Error adding recurring:', error);
+            setRecurringTransactions(prev => prev.filter(r => r.id !== tempId));
+        } else if (data) {
+            setRecurringTransactions(prev => prev.map(r => r.id === tempId ? data : r));
+        }
+    };
+
+    const handleToggleRecurring = async (id: number, isActive: boolean) => {
+        if (!user) return;
+        setRecurringTransactions(prev => prev.map(r => r.id === id ? { ...r, is_active: isActive } : r));
+        const { error } = await supabase.from('but_recurring_transactions').update({ is_active: isActive }).eq('id', id);
+        if (error) {
+            console.error('Error toggling recurring:', error);
+            setRecurringTransactions(prev => prev.map(r => r.id === id ? { ...r, is_active: !isActive } : r));
+        }
+    };
+
+    const handleDeleteRecurring = async (id: number) => {
+        if (!user) return;
+        const backup = recurringTransactions.find(r => r.id === id);
+        setRecurringTransactions(prev => prev.filter(r => r.id !== id));
+        const { error } = await supabase.from('but_recurring_transactions').delete().match({ id, user_id: user.id });
+        if (error) {
+            console.error('Error deleting recurring:', error);
+            if (backup) setRecurringTransactions(prev => [...prev, backup]);
+        }
+    };
+
     if (loading) {
-        return <div className="min-h-screen bg-slate-50 flex justify-center items-center">Yükleniyor...</div>;
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col justify-center items-center gap-4">
+                <div className="animate-pulse-slow">
+                    <SpendMeLogo size={56} />
+                </div>
+                <span className="text-sm font-medium text-slate-400">Yükleniyor...</span>
+            </div>
+        );
     }
 
     // Türkçe Açıklama:
@@ -381,30 +758,34 @@ const App: React.FC = () => {
         };
 
         return (
-            <div className="bg-slate-50 min-h-screen font-sans flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-                    <h2 className="text-2xl font-bold mb-4 text-center">🎟️ Davet Kodu Gerekli</h2>
-                    <p className="text-gray-600 mb-6 text-center">
-                        Bu uygulamayı kullanmak için bir davet koduna ihtiyacınız var. 
-                        Lütfen size gönderilen davet linkini kullanın veya kodu aşağıya girin.
+            <div className="min-h-screen bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 flex items-center justify-center p-4 relative overflow-hidden">
+                <div className="absolute top-20 -left-20 w-72 h-72 bg-brand-400/20 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-20 -right-20 w-96 h-96 bg-brand-300/10 rounded-full blur-3xl"></div>
+                <div className="relative bg-white/95 backdrop-blur-xl rounded-2xl shadow-modal p-8 max-w-sm w-full animate-scale-in">
+                    <div className="flex items-center justify-center mx-auto mb-4">
+                        <SpendMeLogo size={56} />
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-800 text-center">Davet Kodu Gerekli</h2>
+                    <p className="text-sm text-slate-500 mb-6 mt-2 text-center">
+                        Bu uygulamayı kullanmak için bir davet koduna ihtiyacınız var.
                     </p>
                     <input
                         type="text"
                         value={inviteCodeInput}
                         onChange={(e) => setInviteCodeInput(e.target.value.toUpperCase())}
                         placeholder="DAVET KODU"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md mb-4 text-center font-mono text-lg"
+                        className="w-full px-3.5 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-center font-mono text-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all mb-4"
                         maxLength={8}
                     />
                     <button
                         onClick={handleInviteSubmit}
-                        className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 transition-colors font-medium"
+                        className="w-full py-3 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 active:bg-brand-800 transition-colors shadow-sm"
                     >
                         Devam Et
                     </button>
                     <button
                         onClick={() => setNeedsInviteCode(false)}
-                        className="w-full mt-3 text-gray-600 py-2 hover:text-gray-800"
+                        className="w-full mt-3 text-sm text-slate-500 py-2 hover:text-slate-700 transition-colors"
                     >
                         Geri Dön
                     </button>
@@ -421,38 +802,56 @@ const App: React.FC = () => {
         home: 'SpendMe',
         transactions: 'Tüm İşlemler',
         budgets: 'Bütçeler',
+        reports: 'Raporlar',
         settings: 'Ayarlar',
     };
 
     const renderScreen = () => {
         switch (activeScreen) {
             case 'home':
-                return <HomeScreen accounts={accounts} transactions={transactions} categories={categories} budgets={budgets} onDeleteTransaction={handleDeleteTransaction} />;
+                return <HomeScreen accounts={accounts} transactions={transactions} categories={categories} budgets={budgets} onDeleteTransaction={handleDeleteTransaction} onEditTransaction={handleEditTransaction} />;
             case 'transactions':
-                return <TransactionsScreen accounts={accounts} transactions={transactions} categories={categories} onDeleteTransaction={handleDeleteTransaction} />;
+                return <TransactionsScreen accounts={accounts} transactions={transactions} categories={categories} onDeleteTransaction={handleDeleteTransaction} onEditTransaction={handleEditTransaction} />;
             case 'budgets':
-                return <BudgetsScreen 
-                    budgets={budgets} 
-                    transactions={transactions} 
-                    categories={categories} 
+                return <BudgetsScreen
+                    budgets={budgets}
+                    transactions={transactions}
+                    categories={categories}
                     selectedMonth={selectedMonth}
                     setSelectedMonth={setSelectedMonth}
-                    onUpdateBudget={handleAddOrUpdateBudget} 
-                    onDeleteBudget={handleDeleteBudget} 
+                    onUpdateBudget={handleAddOrUpdateBudget}
+                    onDeleteBudget={handleDeleteBudget}
+                />;
+            case 'reports':
+                return <ReportsScreen
+                    budgets={budgets}
+                    transactions={transactions}
+                    categories={categories}
+                    accounts={accounts}
+                    selectedMonth={selectedMonth}
+                    setSelectedMonth={setSelectedMonth}
+                    onUpdateBudget={handleAddOrUpdateBudget}
+                    onDeleteBudget={handleDeleteBudget}
                 />;
             case 'settings':
-                return <SettingsScreen 
+                return <SettingsScreen
                     user={user}
-                    accounts={accounts} 
+                    accounts={accounts}
+                    transactions={transactions}
                     categories={categories}
                     budgets={budgets}
+                    recurringTransactions={recurringTransactions}
                     selectedMonth={selectedMonth}
                     setSelectedMonth={setSelectedMonth}
                     onAddAccount={() => setAddAccountModalOpen(true)}
+                    onEditAccount={handleEditAccount}
                     onDeleteAccount={handleDeleteAccount}
                     onAddCategory={handleAddCategory}
                     onDeleteCategory={handleDeleteCategory}
                     onAddBudget={handleAddOrUpdateBudget}
+                    onAddRecurring={handleAddRecurring}
+                    onToggleRecurring={handleToggleRecurring}
+                    onDeleteRecurring={handleDeleteRecurring}
                 />;
             default:
                 return <HomeScreen accounts={accounts} transactions={transactions} categories={categories} onDeleteTransaction={handleDeleteTransaction}/>;
@@ -460,10 +859,10 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="bg-slate-50 min-h-screen font-sans">
-            <div className="max-w-2xl mx-auto bg-white min-h-screen flex flex-col">
+        <div className="bg-slate-100/80 dark:bg-slate-950 min-h-screen font-sans">
+            <div className="max-w-2xl mx-auto bg-slate-50 dark:bg-slate-900 min-h-screen flex flex-col shadow-lg">
                 <Header title={screenTitles[activeScreen]} user={user} onLogout={handleLogout} />
-                <main className="flex-grow p-4 sm:p-6 pb-24">
+                <main className="flex-grow p-4 pb-24">
                     {renderScreen()}
                 </main>
                 <BottomNavBar 
@@ -477,6 +876,7 @@ const App: React.FC = () => {
                     isOpen={isTransactionFormOpen}
                     onClose={() => setTransactionFormOpen(false)}
                     onSubmit={handleAddTransaction}
+                    onSubmitMultiple={handleAddMultipleTransactions}
                     categories={categories}
                     accounts={accounts}
                 />
@@ -486,6 +886,30 @@ const App: React.FC = () => {
                     isOpen={isAddAccountModalOpen}
                     onClose={() => setAddAccountModalOpen(false)}
                     onSubmit={handleAddAccount}
+                />
+            )}
+            {isEditAccountModalOpen && (
+                <EditAccountModal
+                    isOpen={isEditAccountModalOpen}
+                    onClose={() => {
+                        setEditAccountModalOpen(false);
+                        setEditingAccount(null);
+                    }}
+                    onSubmit={handleUpdateAccount}
+                    account={editingAccount}
+                />
+            )}
+            {isEditTransactionModalOpen && (
+                <EditTransactionModal
+                    isOpen={isEditTransactionModalOpen}
+                    onClose={() => {
+                        setEditTransactionModalOpen(false);
+                        setEditingTransaction(null);
+                    }}
+                    onSubmit={handleUpdateTransaction}
+                    transaction={editingTransaction}
+                    categories={categories}
+                    accounts={accounts}
                 />
             )}
             <InstallPWAButton />

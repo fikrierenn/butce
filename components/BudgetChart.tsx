@@ -1,9 +1,6 @@
 import React, { useMemo } from 'react';
 import { Doughnut, Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title, CategoryScale, LinearScale, BarElement } from 'chart.js';
 import { Transaction, TransactionType, Category, Budget } from '../types';
-
-ChartJS.register(ArcElement, Tooltip, Legend, Title, CategoryScale, LinearScale, BarElement);
 
 interface BudgetChartProps {
   transactions: Transaction[];
@@ -178,10 +175,13 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ transactions, categories, bud
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Gelir/Gider Karşılaştırması */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-bold text-slate-800 mb-4">💰 Gelir vs Gider</h3>
+      <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-card border border-slate-100/60">
+        <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-sm">💰</span>
+          Gelir vs Gider
+        </h3>
         {incomeExpenseData.labels.length > 0 ? (
           <div className="h-64">
             <Doughnut 
@@ -207,8 +207,11 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ transactions, categories, bud
 
       {/* Bütçe vs Harcama Karşılaştırması */}
       {budgetVsSpentData.labels.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">📊 Bütçe vs Harcama</h3>
+        <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-card border border-slate-100/60">
+          <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <span className="w-8 h-8 bg-brand-100 rounded-lg flex items-center justify-center text-sm">📊</span>
+            Bütçe vs Harcama
+          </h3>
           <div className="h-80">
             <Bar 
               data={budgetVsSpentData} 
@@ -229,8 +232,11 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ transactions, categories, bud
 
       {/* Kategoriye Göre Gider Dağılımı */}
       {expenseByCategoryData.labels.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">🎯 Kategoriye Göre Gider Dağılımı</h3>
+        <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-card border border-slate-100/60">
+          <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <span className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-sm">🎯</span>
+            Gider Dağılımı
+          </h3>
           <div className="h-64">
             <Doughnut 
               data={expenseByCategoryData} 

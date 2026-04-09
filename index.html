@@ -9,8 +9,8 @@
     <link rel="manifest" href="/manifest.json" />
     
     <!-- Theme Color -->
-    <meta name="theme-color" content="#4F46E5" />
-    <meta name="msapplication-TileColor" content="#4F46E5" />
+    <meta name="theme-color" content="#0d9488" />
+    <meta name="msapplication-TileColor" content="#0d9488" />
     
     <!-- App Info -->
     <meta name="description" content="Yapay zeka destekli kişisel bütçe takip uygulaması" />
@@ -30,7 +30,94 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="https://img.icons8.com/fluency/32/budget.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="https://img.icons8.com/fluency/16/budget.png" />
+    <!-- Geist Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Geist', 'system-ui', '-apple-system', 'sans-serif'],
+            },
+            colors: {
+              brand: {
+                50: '#f0fdfa',
+                100: '#ccfbf1',
+                200: '#99f6e4',
+                300: '#5eead4',
+                400: '#2dd4bf',
+                500: '#14b8a6',
+                600: '#0d9488',
+                700: '#0f766e',
+                800: '#115e59',
+                900: '#134e4a',
+                950: '#042f2e',
+              },
+              accent: {
+                400: '#fb923c',
+                500: '#f97316',
+                600: '#ea580c',
+              },
+            },
+            boxShadow: {
+              'card': '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
+              'card-hover': '0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04)',
+              'modal': '0 20px 60px -12px rgb(0 0 0 / 0.25)',
+              'nav': '0 -1px 3px 0 rgb(0 0 0 / 0.05)',
+              'fab': '0 8px 24px -4px rgb(13 148 136 / 0.5)',
+            },
+            animation: {
+              'fade-in': 'fadeIn 200ms ease-out',
+              'slide-up': 'slideUp 350ms cubic-bezier(0.16, 1, 0.3, 1)',
+              'scale-in': 'scaleIn 250ms cubic-bezier(0.16, 1, 0.3, 1)',
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            keyframes: {
+              fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+              slideUp: { '0%': { opacity: '0', transform: 'translateY(24px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+              scaleIn: { '0%': { opacity: '0', transform: 'scale(0.92)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      /* Custom scrollbar */
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+      /* Glass card effect */
+      .glass { background: rgba(255,255,255,0.72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+
+      /* Safe area insets for iOS */
+      .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+
+      /* Nav indicator */
+      .nav-indicator { position: relative; }
+      .nav-indicator::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%) scaleX(0);
+        width: 20px;
+        height: 3px;
+        background: #0d9488;
+        border-radius: 3px;
+        transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .nav-indicator.active::after { transform: translateX(-50%) scaleX(1); }
+
+      /* Card hover interaction */
+      .card-interactive { transition: box-shadow 200ms ease, transform 200ms ease; }
+      .card-interactive:active { transform: scale(0.98); }
+    </style>
     <script type="importmap">
 {
   "imports": {

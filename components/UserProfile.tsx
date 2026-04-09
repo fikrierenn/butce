@@ -1,10 +1,6 @@
 import React from 'react';
 import { User } from '@supabase/supabase-js';
 
-// Türkçe Açıklama:
-// Kullanıcı profil bilgilerini gösteren bileşen
-// Email, kullanıcı ID gibi bilgileri gösterir
-
 interface UserProfileProps {
     user: User | null;
 }
@@ -12,33 +8,41 @@ interface UserProfileProps {
 const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
     if (!user) return null;
 
+    const initial = (user.email || 'U').charAt(0).toUpperCase();
+
     return (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                👤 Kullanıcı Bilgileri
-            </h3>
-            
-            <div className="space-y-3">
-                <div className="flex items-start">
-                    <div className="w-24 text-sm text-gray-600 font-medium">Email:</div>
-                    <div className="flex-1 text-sm break-all">{user.email}</div>
-                </div>
-                
-                {user.user_metadata?.full_name && (
-                    <div className="flex items-start">
-                        <div className="w-24 text-sm text-gray-600 font-medium">İsim:</div>
-                        <div className="flex-1 text-sm">{user.user_metadata.full_name}</div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-card border border-slate-100/60 p-5">
+            <div className="flex items-center gap-4 mb-4">
+                {user.user_metadata?.avatar_url ? (
+                    <img
+                        src={user.user_metadata.avatar_url}
+                        alt="Profil"
+                        className="w-12 h-12 rounded-xl"
+                    />
+                ) : (
+                    <div className="w-12 h-12 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center text-lg font-bold">
+                        {initial}
                     </div>
                 )}
-                
-                <div className="flex items-start">
-                    <div className="w-24 text-sm text-gray-600 font-medium">Kullanıcı ID:</div>
-                    <div className="flex-1 text-xs text-gray-500 break-all font-mono">{user.id}</div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 truncate">
+                        {user.user_metadata?.full_name || user.email}
+                    </p>
+                    {user.user_metadata?.full_name && (
+                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                    )}
                 </div>
-                
+            </div>
+
+            <div className="space-y-2.5 pt-3 border-t border-slate-100">
                 <div className="flex items-start">
-                    <div className="w-24 text-sm text-gray-600 font-medium">Kayıt Tarihi:</div>
-                    <div className="flex-1 text-sm">
+                    <div className="w-24 text-xs text-slate-400 font-medium pt-0.5">Kullanıcı ID</div>
+                    <div className="flex-1 text-xs text-slate-500 break-all font-mono">{user.id}</div>
+                </div>
+
+                <div className="flex items-start">
+                    <div className="w-24 text-xs text-slate-400 font-medium pt-0.5">Kayıt Tarihi</div>
+                    <div className="flex-1 text-sm text-slate-700">
                         {new Date(user.created_at!).toLocaleDateString('tr-TR', {
                             year: 'numeric',
                             month: 'long',
@@ -46,11 +50,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
                         })}
                     </div>
                 </div>
-                
+
                 {user.last_sign_in_at && (
                     <div className="flex items-start">
-                        <div className="w-24 text-sm text-gray-600 font-medium">Son Giriş:</div>
-                        <div className="flex-1 text-sm">
+                        <div className="w-24 text-xs text-slate-400 font-medium pt-0.5">Son Giriş</div>
+                        <div className="flex-1 text-sm text-slate-700">
                             {new Date(user.last_sign_in_at).toLocaleDateString('tr-TR', {
                                 year: 'numeric',
                                 month: 'long',
@@ -62,20 +66,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
                     </div>
                 )}
             </div>
-
-            {/* Profil resmi varsa göster */}
-            {user.user_metadata?.avatar_url && (
-                <div className="mt-4 pt-4 border-t">
-                    <img 
-                        src={user.user_metadata.avatar_url} 
-                        alt="Profil" 
-                        className="w-16 h-16 rounded-full"
-                    />
-                </div>
-            )}
         </div>
     );
 };
 
 export default UserProfile;
-

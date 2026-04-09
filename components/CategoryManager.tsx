@@ -81,8 +81,8 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
     }
     
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-bold text-slate-700 mb-4">Kategori ve Bütçe Yönetimi</h2>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-card border border-slate-100/60 p-5">
+            <h2 className="text-base font-semibold text-slate-800 mb-4">Kategori ve Bütçe Yönetimi</h2>
 
             <div className="p-4 bg-slate-50 rounded-lg space-y-3">
                 <h3 className="font-semibold text-slate-800">Yeni Kategori Ekle</h3>
@@ -115,7 +115,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                     <button
                         onClick={handleAddCategory}
                         disabled={isAddingCategory}
-                        className={`p-2 text-white rounded-md ${isAddingCategory ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                        className={`p-2 text-white rounded-md ${isAddingCategory ? 'bg-slate-400 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-700'}`}
                     >
                         {isAddingCategory ? '⏳' : <PlusIcon />}
                     </button>
@@ -134,9 +134,9 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                     />
                 </div>
                 {/* Toplam aylık bütçe özeti */}
-                <div className="mb-3 p-3 bg-indigo-50 border border-indigo-200 rounded-md flex justify-between items-center">
-                    <span className="text-sm font-medium text-indigo-900">Toplam Aylık Bütçe</span>
-                    <span className="text-base font-bold text-indigo-900">{totalMonthlyBudget.toLocaleString('tr-TR')} ₺</span>
+                <div className="mb-3 p-3 bg-brand-50 border border-brand-200 rounded-md flex justify-between items-center">
+                    <span className="text-sm font-medium text-brand-900">Toplam Aylık Bütçe</span>
+                    <span className="text-base font-bold text-brand-900">{totalMonthlyBudget.toLocaleString('tr-TR')} ₺</span>
                 </div>
 
                 <h3 className="font-semibold text-slate-800 mb-4">📊 Kategoriler ve Aylık Bütçeler</h3>
@@ -180,7 +180,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                                 />
                                 <button
                                     onClick={() => onAddBudget(parent.id, parseFloat(budgetInputs[parent.id] || '0'), month)}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium"
+                                    className="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 text-sm font-medium"
                                 >
                                     {getBudgetForCategory(parent.id) ? 'Güncelle' : 'Kaydet'}
                                 </button>
@@ -211,7 +211,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                                             />
                                             <button
                                                 onClick={() => onAddBudget(sub.id, parseFloat(budgetInputs[sub.id] || '0'), month)}
-                                                className="px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs"
+                                                className="px-2 py-1 bg-brand-600 text-white rounded hover:bg-brand-700 text-xs"
                                             >
                                                 {getBudgetForCategory(sub.id) ? '↻' : '+'}
                                             </button>
@@ -235,20 +235,20 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                 {/* Gelir Kategorileri */}
                 {categories.filter(c => c.type === 'income').length > 0 && (
                     <div className="mb-6">
-                        <h4 className="text-lg font-semibold text-blue-700 mb-3">📈 Gelir Kategorileri</h4>
+                        <h4 className="text-lg font-semibold text-brand-700 mb-3">📈 Gelir Kategorileri</h4>
                         {categories.filter(c => c.type === 'income').map(parent => (
-                            <div key={parent.id} className="mb-6 border border-blue-200 rounded-lg p-4 bg-blue-50">
+                            <div key={parent.id} className="mb-6 border border-brand-200 rounded-lg p-4 bg-brand-50">
                                 <div className="flex justify-between items-center mb-3">
-                                    <h4 className="font-semibold text-blue-800 text-lg">{parent.name}</h4>
-                                    <button onClick={() => handleDelete(parent.id, parent.name)} className="text-blue-400 hover:text-red-600">
+                                    <h4 className="font-semibold text-brand-800 text-lg">{parent.name}</h4>
+                                    <button onClick={() => handleDelete(parent.id, parent.name)} className="text-slate-400 hover:text-red-600">
                                         <TrashIcon />
                                     </button>
                                 </div>
 
                                 {/* Gelir bütçe girişi */}
-                                <div className="mb-4 p-3 bg-white rounded-md border border-blue-200">
+                                <div className="mb-4 p-3 bg-white rounded-md border border-brand-200">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-sm font-medium text-blue-700">Beklenen Aylık Gelir:</span>
+                                        <span className="text-sm font-medium text-brand-700">Beklenen Aylık Gelir:</span>
                                         {(() => {
                                             // Gelir için alt kategorilerin bütçe toplamını göster
                                             const childrenSum = (parent.subcategories || []).reduce((sum, sub) => {
@@ -256,7 +256,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                                                 return sum + (b ? b.limit : 0);
                                             }, 0);
                                             return (
-                                                <span className="text-sm text-blue-600 font-medium">
+                                                <span className="text-sm text-brand-600 font-medium">
                                                     Mevcut (Alt Toplam): {childrenSum.toLocaleString('tr-TR')} ₺
                                                 </span>
                                             );
@@ -268,11 +268,11 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                                             placeholder="Beklenen gelir (₺)"
                                             value={budgetInputs[parent.id] || ''}
                                             onChange={(e) => handleBudgetInputChange(parent.id, e.target.value)}
-                                            className="flex-1 px-3 py-2 border border-blue-300 rounded-md text-sm"
+                                            className="flex-1 px-3 py-2 border border-brand-300 rounded-md text-sm"
                                         />
                                         <button
                                             onClick={() => onAddBudget(parent.id, parseFloat(budgetInputs[parent.id] || '0'), month)}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+                                            className="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 text-sm font-medium"
                                         >
                                             {getBudgetForCategory(parent.id) ? 'Güncelle' : 'Kaydet'}
                                         </button>
@@ -282,13 +282,13 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                                 {/* Alt kategoriler */}
                                 {parent.subcategories && parent.subcategories.length > 0 && (
                                     <div className="space-y-3">
-                                        <h5 className="text-sm font-medium text-blue-600">Alt Kategoriler:</h5>
+                                        <h5 className="text-sm font-medium text-brand-600">Alt Kategoriler:</h5>
                                         {parent.subcategories.map(sub => (
-                                            <div key={sub.id} className="flex items-center justify-between p-2 bg-white border border-blue-200 rounded-md">
+                                            <div key={sub.id} className="flex items-center justify-between p-2 bg-white border border-brand-200 rounded-md">
                                                 <div className="flex-1">
-                                                    <span className="text-sm text-blue-700">- {sub.name}</span>
+                                                    <span className="text-sm text-brand-700">- {sub.name}</span>
                                                     {getBudgetForCategory(sub.id) && (
-                                                        <span className="ml-2 text-xs text-blue-600">
+                                                        <span className="ml-2 text-xs text-brand-600">
                                                             ({getBudgetForCategory(sub.id)?.limit.toLocaleString('tr-TR')} ₺/ay)
                                                         </span>
                                                     )}
@@ -299,17 +299,17 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                                                         placeholder="Gelir"
                                                         value={budgetInputs[sub.id] || ''}
                                                         onChange={(e) => handleBudgetInputChange(sub.id, e.target.value)}
-                                                        className="w-20 px-2 py-1 border border-blue-300 rounded text-xs"
+                                                        className="w-20 px-2 py-1 border border-brand-300 rounded text-xs"
                                                     />
                                                     <button
                                                         onClick={() => onAddBudget(sub.id, parseFloat(budgetInputs[sub.id] || '0'), month)}
-                                                        className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+                                                        className="px-2 py-1 bg-brand-600 text-white rounded hover:bg-brand-700 text-xs"
                                                     >
                                                         {getBudgetForCategory(sub.id) ? '↻' : '+'}
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDelete(sub.id, sub.name)} 
-                                                        className="text-blue-400 hover:text-red-600"
+                                                        className="text-slate-400 hover:text-red-600"
                                                     >
                                                         <TrashIcon />
                                                     </button>

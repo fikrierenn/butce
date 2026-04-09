@@ -1,15 +1,15 @@
-import React, { useState, FormEvent } from 'react';
-// Fix: Corrected import path for types
+import React, { useState, FormEvent, useEffect } from 'react';
 import { AccountType, Account } from '../types';
 import CloseIcon from './icons/CloseIcon';
 
-interface AddAccountModalProps {
+interface EditAccountModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (account: Omit<Account, 'id' | 'user_id'>) => void;
+    account: Account | null;
 }
 
-const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSubmit }) => {
+const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, onSubmit, account }) => {
     const [name, setName] = useState('');
     const [type, setType] = useState<AccountType>(AccountType.BANK);
     const [balance, setBalance] = useState('');
@@ -20,6 +20,20 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSu
     const [statementDate, setStatementDate] = useState('');
     const [paymentDueDate, setPaymentDueDate] = useState('');
     const [creditLimit, setCreditLimit] = useState('');
+
+    // Account değiştiğinde form'u güncelle
+    useEffect(() => {
+        if (account) {
+            setName(account.name);
+            setType(account.type);
+            setBalance(account.balance.toString());
+            setCardNumber(account.card_number || '');
+            setExpiryDate(account.expiry_date || '');
+            setStatementDate(account.statement_date?.toString() || '');
+            setPaymentDueDate(account.payment_due_date?.toString() || '');
+            setCreditLimit(account.credit_limit?.toString() || '');
+        }
+    }, [account]);
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -38,25 +52,16 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSu
         };
 
         onSubmit(accountData);
-
-        // Form'u temizle
-        setName('');
-        setType(AccountType.BANK);
-        setBalance('');
-        setCardNumber('');
-        setExpiryDate('');
-        setStatementDate('');
-        setPaymentDueDate('');
-        setCreditLimit('');
+        onClose();
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || !account) return null;
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-modal w-full sm:max-w-md max-h-[90vh] overflow-y-auto custom-scrollbar animate-slide-up p-5">
                  <div className="flex justify-between items-center mb-5">
-                    <h2 className="text-lg font-semibold text-slate-800">Yeni Hesap Ekle</h2>
+                    <h2 className="text-lg font-semibold text-slate-800">Hesap Düzenle</h2>
                     <button onClick={onClose} className="w-8 h-8 rounded-xl hover:bg-slate-100 flex items-center justify-center transition-colors text-slate-400 hover:text-slate-600"><CloseIcon /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -179,7 +184,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSu
                             İptal
                         </button>
                         <button type="submit" className="px-4 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 active:bg-brand-800 transition-colors shadow-sm">
-                            Hesap Ekle
+                            Güncelle
                         </button>
                     </div>
                 </form>
@@ -188,4 +193,4 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSu
     );
 };
 
-export default AddAccountModal;
+export default EditAccountModal;

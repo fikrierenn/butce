@@ -34,7 +34,7 @@ const BudgetsScreen: React.FC<BudgetsScreenProps> = ({
                         type="month"
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                     />
                     <span className="text-sm text-slate-500">
                         {new Date(selectedMonth + '-01').toLocaleDateString('tr-TR', { 

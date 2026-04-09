@@ -9,11 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^7.6.1",
+    "@capacitor/core": "^8.3.0",
+    "@google/generative-ai": "^0.21.0",
+    "@supabase/supabase-js": "2.39.8",
+    "chart.js": "4.4.2",
     "react": "^19.1.1",
     "react-chartjs-2": "5.2.0",
-    "chart.js": "4.4.2",
-    "@supabase/supabase-js": "2.39.8",
-    "@google/generative-ai": "^0.21.0",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {

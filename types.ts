@@ -37,6 +37,11 @@ export interface Transaction {
     from_account_id?: number | null;
     to_account_id?: number | null;
     ai_prompt?: string | null;
+    // Türkçe Açıklama: Kredi kartı taksit bilgileri
+    is_installment?: boolean; // Taksitli işlem mi?
+    installment_count?: number | null; // Toplam taksit sayısı
+    installment_current?: number | null; // Mevcut taksit numarası
+    installment_parent_id?: number | null; // Ana taksit işleminin ID'si
     created_at: string;
 }
 
@@ -55,10 +60,42 @@ export interface Account {
     name: string;
     type: AccountType;
     balance: number;
-    card_number?: string | null;
-    expiry_date?: string | null;
-    statement_date?: number | null;
-    payment_due_date?: number | null;
+    // Türkçe Açıklama: Kredi kartı özel bilgileri
+    card_number?: string | null; // Kart numarası (son 4 hane)
+    expiry_date?: string | null; // Son kullanma tarihi (MM/YY)
+    statement_date?: number | null; // Ekstre kesim tarihi (1-31)
+    payment_due_date?: number | null; // Ödeme vadesi (1-31)
+    credit_limit?: number | null; // Kredi limiti
+    available_credit?: number | null; // Kullanılabilir kredi
+}
+
+export enum RecurringFrequency {
+    DAILY = 'daily',
+    WEEKLY = 'weekly',
+    MONTHLY = 'monthly',
+    YEARLY = 'yearly',
+}
+
+export interface RecurringTransaction {
+    id: number;
+    user_id: string;
+    type: TransactionType;
+    amount: number;
+    description: string;
+    category_id: number | null;
+    account_id: number | null;
+    from_account_id?: number | null;
+    to_account_id?: number | null;
+    frequency: RecurringFrequency;
+    day_of_month?: number | null;
+    day_of_week?: number | null;
+    start_date: string;
+    end_date?: string | null;
+    next_run_date: string;
+    last_run_date?: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface Budget {

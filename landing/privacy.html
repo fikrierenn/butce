@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpendMe - Gizlilik Politikası</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Geist', 'system-ui', 'sans-serif'] }, colors: { brand: { 600: '#0d9488', 700: '#0f766e' } } } } }
+    </script>
+</head>
+<body class="bg-slate-50 font-sans">
+    <header class="bg-gradient-to-r from-brand-600 to-brand-700 py-4 px-6">
+        <div class="max-w-3xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="text-white font-bold text-lg">← SpendMe</a>
+        </div>
+    </header>
+    <main class="max-w-3xl mx-auto px-6 py-12">
+        <h1 class="text-3xl font-bold text-slate-900 mb-8">Gizlilik Politikası</h1>
+        <div class="prose prose-slate space-y-6 text-sm text-slate-600 leading-relaxed">
+            <p><strong>Son güncelleme:</strong> 9 Nisan 2026</p>
+
+            <h2 class="text-lg font-semibold text-slate-800 mt-8">1. Toplanan Veriler</h2>
+            <p>SpendMe, yalnızca uygulamanın çalışması için gerekli olan verileri toplar:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>E-posta adresi (kayıt ve giriş için)</li>
+                <li>Finansal işlem verileri (gelir, gider, transfer kayıtları)</li>
+                <li>Hesap bilgileri (hesap adı, bakiye, tip)</li>
+                <li>Kategori ve bütçe bilgileri</li>
+            </ul>
+
+            <h2 class="text-lg font-semibold text-slate-800 mt-8">2. Verilerin Kullanımı</h2>
+            <p>Topladığımız veriler yalnızca aşağıdaki amaçlarla kullanılır:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Uygulama hizmetlerinin sağlanması</li>
+                <li>Kişiselleştirilmiş bütçe raporları oluşturulması</li>
+                <li>AI destekli fiş ve SMS analizi (analiz için AI servis sağlayıcısına gönderilir, ancak verileriniz saklanmaz veya eğitim amacıyla kullanılmaz)</li>
+            </ul>
+
+            <h2 class="text-lg font-semibold text-slate-800 mt-8">3. Veri Güvenliği</h2>
+            <p>Verileriniz Supabase altyapısında, Row Level Security (RLS) ile korunur. Her kullanıcı yalnızca kendi verilerine erişebilir. Tüm bağlantılar HTTPS ile şifrelenir.</p>
+
+            <h2 class="text-lg font-semibold text-slate-800 mt-8">4. Üçüncü Taraf Paylaşımı</h2>
+            <p>Verileriniz hiçbir koşulda üçüncü taraflarla satılmaz, kiralanmaz veya reklam amacıyla paylaşılmaz. AI fiş tarama ve SMS analizi özelliklerinde, ilgili veriler yalnızca anlık analiz için AI servis sağlayıcısına iletilir ve işlem sonrası sağlayıcı tarafında saklanmaz.</p>
+
+            <h2 class="text-lg font-semibold text-slate-800 mt-8">5. Veri Silme</h2>
+            <p>Hesabınızı istediğiniz zaman silebilirsiniz. Hesap silindiğinde tüm verileriniz kalıcı olarak kaldırılır.</p>
+
+            <h2 class="text-lg font-semibold text-slate-800 mt-8">6. İletişim</h2>
+            <p>Gizlilik politikamız hakkında sorularınız için <a href="mailto:info@spendmeapp.com" class="text-brand-600 hover:underline">info@spendmeapp.com</a> adresinden bize ulaşabilirsiniz.</p>
+        </div>
+    </main>
+</body>
+</html>

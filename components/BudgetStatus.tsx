@@ -2,18 +2,15 @@ import React, { useMemo, useState } from 'react';
 import { Budget, Transaction, Category, TransactionType } from '../types';
 import ExclamationIcon from './icons/ExclamationIcon';
 import TrashIcon from './icons/TrashIcon';
+import { formatCurrency } from '../lib/currency';
 
 interface BudgetStatusProps {
     budgets: Budget[];
     transactions: Transaction[];
-    categories: Category[]; // Hierarchical
+    categories: Category[];
     onUpdateBudget: (id: number, limit: number) => Promise<void>;
     onDeleteBudget: (id: number) => Promise<void>;
 }
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(amount);
-};
 
 const getSpentAmountForCategory = (category: Category, transactions: Transaction[]): number => {
     let total = 0;
@@ -125,7 +122,7 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
                                         onChange={(e) => setNewLimit(e.target.value)}
                                         className="w-24 text-right px-2 py-1 border border-slate-300 rounded-md text-sm"
                                     />
-                                    <button onClick={() => handleSave(parentBudget.id)} className="text-indigo-600 text-sm font-semibold">Kaydet</button>
+                                    <button onClick={() => handleSave(parentBudget.id)} className="text-brand-600 text-sm font-semibold">Kaydet</button>
                                 </div>
                             ) : (
                                 <div className="flex items-center space-x-3">
@@ -138,7 +135,7 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
                         </div>
                         <div className="w-full bg-slate-200 rounded-full h-2.5">
                             <div 
-                                className={`h-2.5 rounded-full ${parentBudget.percentage > 90 ? 'bg-red-500' : parentBudget.percentage > 75 ? 'bg-yellow-500' : 'bg-indigo-600'}`}
+                                className={`h-2.5 rounded-full ${parentBudget.percentage > 90 ? 'bg-red-500' : parentBudget.percentage > 75 ? 'bg-yellow-500' : 'bg-brand-600'}`}
                                 style={{ width: `${parentBudget.percentage}%` }}
                             ></div>
                         </div>
@@ -169,7 +166,7 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
                                                 onChange={(e) => setNewLimit(e.target.value)}
                                                 className="w-20 text-right px-2 py-1 border border-slate-300 rounded-md text-xs"
                                             />
-                                            <button onClick={() => handleSave(b.id)} className="text-indigo-600 text-xs font-semibold">Kaydet</button>
+                                            <button onClick={() => handleSave(b.id)} className="text-brand-600 text-xs font-semibold">Kaydet</button>
                                         </div>
                                     ) : (
                                         <>
@@ -182,7 +179,7 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
                                 </div>
                                 <div className="w-16 bg-slate-200 rounded-full h-1.5 ml-2">
                                     <div 
-                                        className={`h-1.5 rounded-full ${b.percentage > 90 ? 'bg-red-500' : b.percentage > 75 ? 'bg-yellow-500' : 'bg-indigo-600'}`}
+                                        className={`h-1.5 rounded-full ${b.percentage > 90 ? 'bg-red-500' : b.percentage > 75 ? 'bg-yellow-500' : 'bg-brand-600'}`}
                                         style={{ width: `${b.percentage}%` }}
                                     ></div>
                                 </div>
@@ -198,8 +195,8 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
     };
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Aylık Bütçeler</h3>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-card border border-slate-100/60 p-5">
+            <h3 className="text-base font-semibold text-slate-800 mb-4">Aylık Bütçeler</h3>
             {budgetData.length > 0 ? (
                 <div>
                     {/* Gider kategorileri */}
@@ -210,7 +207,7 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
                     {/* Gelir kategorileri */}
                     {Object.entries(groupedBudgets)
                         .filter(([key]) => key.startsWith('income-'))
-                        .map(([key, group]) => renderBudgetGroup(key, group, "text-blue-700"))}
+                        .map(([key, group]) => renderBudgetGroup(key, group, "text-brand-700"))}
                 </div>
             ) : (
                 <div className="text-center py-6">

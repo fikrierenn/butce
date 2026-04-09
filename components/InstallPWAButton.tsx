@@ -63,21 +63,21 @@ const InstallPWAButton: React.FC = () => {
 
     return (
         <div className="fixed bottom-20 left-4 right-4 z-50">
-            <div className="bg-indigo-600 text-white p-4 rounded-lg shadow-lg flex items-center justify-between">
+            <div className="bg-gradient-to-r from-brand-600 to-brand-700 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between animate-slide-up">
                 <div className="flex-1 mr-3">
-                    <p className="font-semibold">📱 Uygulamayı Kur</p>
-                    <p className="text-sm text-indigo-100">Ana ekranına ekle, hızlı erişim sağla!</p>
+                    <p className="font-semibold text-sm">Uygulamayı Kur</p>
+                    <p className="text-xs text-brand-200">Ana ekranına ekle, hızlı erişim sağla!</p>
                 </div>
                 <div className="flex gap-2">
                     <button
                         onClick={handleInstallClick}
-                        className="bg-white text-indigo-600 px-4 py-2 rounded-md font-medium hover:bg-indigo-50 transition-colors"
+                        className="bg-white text-brand-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-50 transition-colors"
                     >
                         Kur
                     </button>
                     <button
                         onClick={() => setShowButton(false)}
-                        className="text-white hover:text-indigo-100 px-2"
+                        className="text-white hover:text-brand-200 px-2"
                     >
                         ✕
                     </button>
