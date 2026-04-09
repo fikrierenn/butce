@@ -154,35 +154,34 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                         </div>
 
                         {/* Ana kategori bütçe girişi */}
-                        <div className="mb-4 p-3 bg-slate-50 rounded-md">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="text-sm font-medium text-slate-700">Aylık Bütçe:</span>
+                        <div className="mb-4 p-3 bg-slate-50 rounded-xl space-y-2">
+                            <div className="flex flex-wrap items-center gap-1">
+                                <span className="text-xs font-medium text-slate-500">Aylık Bütçe:</span>
                                 {(() => {
-                                    // Ana kategori için alt kategorilerin bütçe toplamını göster
                                     const childrenSum = (parent.subcategories || []).reduce((sum, sub) => {
                                         const b = getBudgetForCategory(sub.id);
                                         return sum + (b ? b.limit : 0);
                                     }, 0);
                                     return (
-                                        <span className="text-sm text-green-600 font-medium">
-                                            Mevcut (Alt Toplam): {childrenSum.toLocaleString('tr-TR')} ₺
+                                        <span className="text-xs text-emerald-600 font-medium">
+                                            Alt Toplam: {childrenSum.toLocaleString('tr-TR')} ₺
                                         </span>
                                     );
                                 })()}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex gap-2">
                                 <input
                                     type="number"
-                                    placeholder="Aylık bütçe (₺)"
+                                    placeholder="₺ Bütçe"
                                     value={budgetInputs[parent.id] || ''}
                                     onChange={(e) => handleBudgetInputChange(parent.id, e.target.value)}
-                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-md text-sm"
+                                    className="flex-1 min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm"
                                 />
                                 <button
                                     onClick={() => onAddBudget(parent.id, parseFloat(budgetInputs[parent.id] || '0'), month)}
-                                    className="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 text-sm font-medium"
+                                    className="px-3 py-2 bg-brand-600 text-white rounded-xl hover:bg-brand-700 text-xs font-medium whitespace-nowrap"
                                 >
-                                    {getBudgetForCategory(parent.id) ? 'Güncelle' : 'Kaydet'}
+                                    {getBudgetForCategory(parent.id) ? '↻' : '✓'}
                                 </button>
                             </div>
                         </div>
@@ -192,34 +191,36 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                             <div className="space-y-3">
                                 <h5 className="text-sm font-medium text-slate-600">Alt Kategoriler:</h5>
                                 {parent.subcategories.map(sub => (
-                                    <div key={sub.id} className="flex items-center justify-between p-2 bg-white border border-slate-200 rounded-md">
-                                        <div className="flex-1">
-                                            <span className="text-sm text-slate-700">- {sub.name}</span>
-                                            {getBudgetForCategory(sub.id) && (
-                                                <span className="ml-2 text-xs text-green-600">
-                                                    ({getBudgetForCategory(sub.id)?.limit.toLocaleString('tr-TR')} ₺/ay)
-                                                </span>
-                                            )}
+                                    <div key={sub.id} className="p-2.5 bg-white border border-slate-200 rounded-xl">
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <div className="flex-1 min-w-0">
+                                                <span className="text-sm text-slate-700 font-medium">{sub.name}</span>
+                                                {getBudgetForCategory(sub.id) && (
+                                                    <span className="ml-1.5 text-xs text-emerald-600">
+                                                        ({getBudgetForCategory(sub.id)?.limit.toLocaleString('tr-TR')} ₺)
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => handleDelete(sub.id, sub.name)}
+                                                className="text-slate-300 hover:text-red-500 ml-2"
+                                            >
+                                                <TrashIcon />
+                                            </button>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex gap-2">
                                             <input
                                                 type="number"
-                                                placeholder="Bütçe"
+                                                placeholder="₺ Bütçe"
                                                 value={budgetInputs[sub.id] || ''}
                                                 onChange={(e) => handleBudgetInputChange(sub.id, e.target.value)}
-                                                className="w-20 px-2 py-1 border border-slate-300 rounded text-xs"
+                                                className="flex-1 min-w-0 px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs"
                                             />
                                             <button
                                                 onClick={() => onAddBudget(sub.id, parseFloat(budgetInputs[sub.id] || '0'), month)}
-                                                className="px-2 py-1 bg-brand-600 text-white rounded hover:bg-brand-700 text-xs"
+                                                className="px-2.5 py-1.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 text-xs"
                                             >
                                                 {getBudgetForCategory(sub.id) ? '↻' : '+'}
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDelete(sub.id, sub.name)} 
-                                                className="text-slate-400 hover:text-red-600"
-                                            >
-                                                <TrashIcon />
                                             </button>
                                         </div>
                                     </div>
@@ -246,35 +247,34 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                                 </div>
 
                                 {/* Gelir bütçe girişi */}
-                                <div className="mb-4 p-3 bg-white rounded-md border border-brand-200">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-sm font-medium text-brand-700">Beklenen Aylık Gelir:</span>
+                                <div className="mb-4 p-3 bg-white rounded-xl border border-brand-200 space-y-2">
+                                    <div className="flex flex-wrap items-center gap-1">
+                                        <span className="text-xs font-medium text-brand-700">Beklenen Gelir:</span>
                                         {(() => {
-                                            // Gelir için alt kategorilerin bütçe toplamını göster
                                             const childrenSum = (parent.subcategories || []).reduce((sum, sub) => {
                                                 const b = getBudgetForCategory(sub.id);
                                                 return sum + (b ? b.limit : 0);
                                             }, 0);
                                             return (
-                                                <span className="text-sm text-brand-600 font-medium">
-                                                    Mevcut (Alt Toplam): {childrenSum.toLocaleString('tr-TR')} ₺
+                                                <span className="text-xs text-brand-600 font-medium">
+                                                    Alt Toplam: {childrenSum.toLocaleString('tr-TR')} ₺
                                                 </span>
                                             );
                                         })()}
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex gap-2">
                                         <input
                                             type="number"
-                                            placeholder="Beklenen gelir (₺)"
+                                            placeholder="₺ Gelir"
                                             value={budgetInputs[parent.id] || ''}
                                             onChange={(e) => handleBudgetInputChange(parent.id, e.target.value)}
-                                            className="flex-1 px-3 py-2 border border-brand-300 rounded-md text-sm"
+                                            className="flex-1 min-w-0 px-3 py-2 border border-brand-200 rounded-xl text-sm"
                                         />
                                         <button
                                             onClick={() => onAddBudget(parent.id, parseFloat(budgetInputs[parent.id] || '0'), month)}
-                                            className="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 text-sm font-medium"
+                                            className="px-3 py-2 bg-brand-600 text-white rounded-xl hover:bg-brand-700 text-xs font-medium whitespace-nowrap"
                                         >
-                                            {getBudgetForCategory(parent.id) ? 'Güncelle' : 'Kaydet'}
+                                            {getBudgetForCategory(parent.id) ? '↻' : '✓'}
                                         </button>
                                     </div>
                                 </div>
@@ -284,34 +284,36 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
                                     <div className="space-y-3">
                                         <h5 className="text-sm font-medium text-brand-600">Alt Kategoriler:</h5>
                                         {parent.subcategories.map(sub => (
-                                            <div key={sub.id} className="flex items-center justify-between p-2 bg-white border border-brand-200 rounded-md">
-                                                <div className="flex-1">
-                                                    <span className="text-sm text-brand-700">- {sub.name}</span>
-                                                    {getBudgetForCategory(sub.id) && (
-                                                        <span className="ml-2 text-xs text-brand-600">
-                                                            ({getBudgetForCategory(sub.id)?.limit.toLocaleString('tr-TR')} ₺/ay)
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="number"
-                                                        placeholder="Gelir"
-                                                        value={budgetInputs[sub.id] || ''}
-                                                        onChange={(e) => handleBudgetInputChange(sub.id, e.target.value)}
-                                                        className="w-20 px-2 py-1 border border-brand-300 rounded text-xs"
-                                                    />
+                                            <div key={sub.id} className="p-2.5 bg-white border border-brand-200 rounded-xl">
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <div className="flex-1 min-w-0">
+                                                        <span className="text-sm text-brand-700 font-medium">{sub.name}</span>
+                                                        {getBudgetForCategory(sub.id) && (
+                                                            <span className="ml-1.5 text-xs text-brand-600">
+                                                                ({getBudgetForCategory(sub.id)?.limit.toLocaleString('tr-TR')} ₺)
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <button
-                                                        onClick={() => onAddBudget(sub.id, parseFloat(budgetInputs[sub.id] || '0'), month)}
-                                                        className="px-2 py-1 bg-brand-600 text-white rounded hover:bg-brand-700 text-xs"
-                                                    >
-                                                        {getBudgetForCategory(sub.id) ? '↻' : '+'}
-                                                    </button>
-                                                    <button 
                                                         onClick={() => handleDelete(sub.id, sub.name)} 
                                                         className="text-slate-400 hover:text-red-600"
                                                     >
                                                         <TrashIcon />
+                                                    </button>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="₺ Gelir"
+                                                        value={budgetInputs[sub.id] || ''}
+                                                        onChange={(e) => handleBudgetInputChange(sub.id, e.target.value)}
+                                                        className="flex-1 min-w-0 px-2.5 py-1.5 border border-brand-200 rounded-lg text-xs"
+                                                    />
+                                                    <button
+                                                        onClick={() => onAddBudget(sub.id, parseFloat(budgetInputs[sub.id] || '0'), month)}
+                                                        className="px-2.5 py-1.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 text-xs"
+                                                    >
+                                                        {getBudgetForCategory(sub.id) ? '↻' : '+'}
                                                     </button>
                                                 </div>
                                             </div>

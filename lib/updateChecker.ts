@@ -1,6 +1,4 @@
-// @ts-ignore
-import { version as APP_VERSION } from '../package.json';
-
+const APP_VERSION = '1.1.2';
 const VERSION_CHECK_URL = 'https://raw.githubusercontent.com/fikrierenn/butce/main/public/version.json';
 
 interface VersionInfo {
@@ -30,7 +28,6 @@ export const checkForUpdate = async (): Promise<{
     try {
         const res = await fetch(VERSION_CHECK_URL + '?t=' + Date.now(), {
             cache: 'no-store',
-            mode: 'cors',
         });
         if (!res.ok) return { hasUpdate: false, forceUpdate: false, versionInfo: null };
 
@@ -40,7 +37,6 @@ export const checkForUpdate = async (): Promise<{
 
         return { hasUpdate, forceUpdate, versionInfo: info };
     } catch (e) {
-        console.error('Update check error:', e);
         return { hasUpdate: false, forceUpdate: false, versionInfo: null };
     }
 };
