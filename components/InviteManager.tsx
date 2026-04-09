@@ -22,6 +22,7 @@ const InviteManager: React.FC = () => {
     const [newInviteNotes, setNewInviteNotes] = useState('');
     const [newInviteDays, setNewInviteDays] = useState(7);
     const [copiedCode, setCopiedCode] = useState<string | null>(null);
+    const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
     useEffect(() => {
         loadInvites();
@@ -46,10 +47,12 @@ const InviteManager: React.FC = () => {
         });
 
         if (error) {
-            alert('Davet kodu oluşturulurken hata: ' + error.message);
+            setStatusMessage('Hata: ' + error.message);
+            setTimeout(() => setStatusMessage(null), 3000);
         } else if (data && data.length > 0) {
-            alert(`Davet kodu oluşturuldu: ${data[0].invite_code}`);
             copyToClipboard(data[0].invite_url);
+            setStatusMessage(`Davet kodu: ${data[0].invite_code} - Kopyalandı!`);
+            setTimeout(() => setStatusMessage(null), 4000);
             setNewInviteEmail('');
             setNewInviteNotes('');
             loadInvites();
@@ -57,20 +60,19 @@ const InviteManager: React.FC = () => {
     };
 
     const deleteInvite = async (code: string) => {
-        if (!confirm(`${code} kodunu silmek istediğinize emin misiniz?`)) return;
-
         const { data, error } = await supabase.rpc('delete_invite', {
             code_param: code
         });
 
         if (error) {
-            alert('Silme hatası: ' + error.message);
+            setStatusMessage('Silme hatası: ' + error.message);
         } else if (data) {
-            alert('Davet kodu silindi');
+            setStatusMessage('Davet kodu silindi');
             loadInvites();
         } else {
-            alert('Davet kodu bulunamadı veya zaten kullanılmış');
+            setStatusMessage('Davet kodu bulunamadı');
         }
+        setTimeout(() => setStatusMessage(null), 3000);
     };
 
     const copyToClipboard = (inviteUrl: string) => {
@@ -150,6 +152,14 @@ const InviteManager: React.FC = () => {
                     >
                         Davet Kodu Oluştur
                     </button>
+
+                    {statusMessage && (
+                        <div className={`mt-3 p-3 rounded-xl text-sm font-medium text-center animate-fade-in ${
+                            statusMessage.startsWith('Hata') ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                        }`}>
+                            {statusMessage}
+                        </div>
+                    )}
                 </div>
             </div>
 

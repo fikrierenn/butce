@@ -156,8 +156,12 @@ const App: React.FC = () => {
     }, [fetchData]);
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
-        // Capacitor WebView'da session temizliği
+        try {
+            await supabase.auth.signOut();
+        } catch (e) {
+            console.error('Sign out error:', e);
+        }
+        // State temizle ve login ekranına dön
         setSession(null);
         setUser(null);
         setTransactions([]);
@@ -166,6 +170,7 @@ const App: React.FC = () => {
         setBudgets([]);
         setRecurringTransactions([]);
         setActiveScreen('home');
+        setLoading(false);
     };
     
     const handleEditAccount = (account: Account) => {
