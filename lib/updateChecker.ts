@@ -1,4 +1,6 @@
-const APP_VERSION = '1.0.0';
+// @ts-ignore
+import { version as APP_VERSION } from '../package.json';
+
 const VERSION_CHECK_URL = 'https://raw.githubusercontent.com/fikrierenn/butce/main/public/version.json';
 
 interface VersionInfo {
@@ -30,14 +32,9 @@ export const checkForUpdate = async (): Promise<{
             cache: 'no-store',
             mode: 'cors',
         });
-        if (!res.ok) {
-            console.log('Update check failed:', res.status);
-            return { hasUpdate: false, forceUpdate: false, versionInfo: null };
-        }
+        if (!res.ok) return { hasUpdate: false, forceUpdate: false, versionInfo: null };
 
         const info: VersionInfo = await res.json();
-        console.log('Update check:', { current: APP_VERSION, remote: info.version });
-
         const hasUpdate = compareVersions(APP_VERSION, info.version) > 0;
         const forceUpdate = info.forceUpdate || compareVersions(APP_VERSION, info.minVersion) > 0;
 
