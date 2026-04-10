@@ -12,7 +12,7 @@
 // npm scripts üzerinden:
 //   npm run version:sync  → her build / cap sync öncesi tetiklenir
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -79,8 +79,12 @@ const drift = [];
     }
 }
 
-// 3) android/app/build.gradle senkronize et
-{
+// 3) android/app/build.gradle senkronize et (varsa)
+// CI'de npx cap add android çağrılmadan önce android/ klasörü olmayabilir —
+// bu durumda sadece uyarı verip geçeriz.
+if (!existsSync(buildGradlePath)) {
+    log('android/app/build.gradle bulunamadı — atlanıyor (CI\'de cap add öncesi normal)');
+} else {
     const gradle = readFileSync(buildGradlePath, 'utf-8');
 
     // versionCode ve versionName satırlarını regex ile değiştir
