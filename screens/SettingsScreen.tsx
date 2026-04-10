@@ -37,7 +37,7 @@ const VersionCard: React.FC = () => {
     }, []);
 
     return (
-        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-card dark:shadow-none border border-slate-100/60 dark:border-slate-700/60 p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700 p-5">
             <div className="flex flex-col items-center text-center">
                 <SpendMeLogo size={40} />
                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 mt-2">SpendMe</p>
@@ -130,7 +130,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <UserProfile user={user} />
 
             {/* Genel Ayarlar */}
-            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-card dark:shadow-none border border-slate-100/60 dark:border-slate-700/60 p-5">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700 p-5">
                 <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                     <span className="w-8 h-8 bg-brand-100 dark:bg-brand-900/30 rounded-lg flex items-center justify-center text-sm">⚙️</span>
                     Genel Ayarlar

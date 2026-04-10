@@ -36,6 +36,7 @@ const App: React.FC = () => {
 
     const [activeScreen, setActiveScreen] = useState('home');
     const [isTransactionFormOpen, setTransactionFormOpen] = useState(false);
+    const [transactionFormInitialType, setTransactionFormInitialType] = useState<TransactionType | undefined>(undefined);
     const [isAddAccountModalOpen, setAddAccountModalOpen] = useState(false);
     const [isEditAccountModalOpen, setEditAccountModalOpen] = useState(false);
     const [isEditTransactionModalOpen, setEditTransactionModalOpen] = useState(false);
@@ -824,7 +825,7 @@ const App: React.FC = () => {
     const renderScreen = () => {
         switch (activeScreen) {
             case 'home':
-                return <HomeScreen accounts={accounts} transactions={transactions} categories={categories} budgets={budgets} onDeleteTransaction={handleDeleteTransaction} onEditTransaction={handleEditTransaction} />;
+                return <HomeScreen accounts={accounts} transactions={transactions} categories={categories} budgets={budgets} onDeleteTransaction={handleDeleteTransaction} onEditTransaction={handleEditTransaction} onAddTransactionClick={(type?: TransactionType) => { setTransactionFormInitialType(type); setTransactionFormOpen(true); }} setActiveScreen={setActiveScreen} />;
             case 'transactions':
                 return <TransactionsScreen accounts={accounts} transactions={transactions} categories={categories} onDeleteTransaction={handleDeleteTransaction} onEditTransaction={handleEditTransaction} />;
             case 'budgets':
@@ -869,14 +870,14 @@ const App: React.FC = () => {
                     onDeleteRecurring={handleDeleteRecurring}
                 />;
             default:
-                return <HomeScreen accounts={accounts} transactions={transactions} categories={categories} onDeleteTransaction={handleDeleteTransaction}/>;
+                return <HomeScreen accounts={accounts} transactions={transactions} categories={categories} budgets={budgets} onDeleteTransaction={handleDeleteTransaction} onEditTransaction={handleEditTransaction} onAddTransactionClick={(type?: TransactionType) => { setTransactionFormInitialType(type); setTransactionFormOpen(true); }} setActiveScreen={setActiveScreen} />;
         }
     };
 
     return (
-        <div className="bg-slate-100/80 dark:bg-slate-950 min-h-screen font-sans">
-            <div className="max-w-2xl mx-auto bg-slate-50 dark:bg-slate-900 min-h-screen flex flex-col shadow-lg">
-                <Header title={screenTitles[activeScreen]} user={user} onLogout={handleLogout} />
+        <div className="bg-brand-50 dark:bg-surface-dark min-h-screen font-sans">
+            <div className="max-w-2xl mx-auto bg-brand-50 dark:bg-surface-dark min-h-screen flex flex-col">
+                <Header title={screenTitles[activeScreen]} user={user} onLogout={handleLogout} activeScreen={activeScreen} />
                 <main className="flex-grow p-4 pb-24">
                     {renderScreen()}
                 </main>
@@ -889,11 +890,12 @@ const App: React.FC = () => {
             {isTransactionFormOpen && (
                 <TransactionForm
                     isOpen={isTransactionFormOpen}
-                    onClose={() => setTransactionFormOpen(false)}
+                    onClose={() => { setTransactionFormOpen(false); setTransactionFormInitialType(undefined); }}
                     onSubmit={handleAddTransaction}
                     onSubmitMultiple={handleAddMultipleTransactions}
                     categories={categories}
                     accounts={accounts}
+                    initialType={transactionFormInitialType}
                 />
             )}
             {isAddAccountModalOpen && (

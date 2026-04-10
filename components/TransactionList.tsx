@@ -36,11 +36,11 @@ const TransactionItem: React.FC<{
       );
     }
     const isIncome = type === TransactionType.INCOME;
-    const bgColor = isIncome ? 'bg-emerald-50' : 'bg-red-50';
-    const textColor = isIncome ? 'text-emerald-600' : 'text-red-500';
+    const bgColor = isIncome ? 'bg-brand-100' : 'bg-red-50';
+    const textColor = isIncome ? 'text-brand-700' : 'text-red-500';
 
     return (
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${bgColor} ${textColor} font-bold`}>
+        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${bgColor} ${textColor} font-bold`}>
             {categoryPath?.charAt(0).toUpperCase() || '?'}
         </div>
     )
@@ -68,12 +68,12 @@ const TransactionItem: React.FC<{
     return `${categoryPath || t('list.uncategorized')} · ${accountName || t('list.noAccount')}`;
   };
 
-  const amountColor = type === TransactionType.INCOME ? 'text-emerald-600 font-semibold' : type === TransactionType.EXPENSE ? 'text-red-500 font-semibold' : 'text-slate-500';
+  const amountColor = type === TransactionType.INCOME ? 'text-brand-700 font-bold' : type === TransactionType.EXPENSE ? 'text-red-500 font-bold' : 'text-slate-500';
   const amountPrefix = type === TransactionType.INCOME ? '+' : type === TransactionType.EXPENSE ? '-' : '';
 
   // Taksitli işlem için özel styling
   const isInstallment = transaction.is_installment && transaction.installment_count && transaction.installment_current;
-  const installmentBorder = isInstallment ? 'border-l-4 border-l-brand-400' : '';
+  const installmentBorder = isInstallment ? 'border-l-4 border-l-brand-500' : '';
 
   return (
     <li className={`flex items-center justify-between py-3.5 group ${installmentBorder}`}>
@@ -197,13 +197,13 @@ const InstallmentGroup: React.FC<{
   const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
   
   return (
-    <li className="border-l-4 border-l-brand-400">
+    <li className="border-l-4 border-l-brand-500">
       <div
-        className="flex items-center justify-between py-3.5 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition-colors"
+        className="flex items-center justify-between py-3.5 cursor-pointer hover:bg-brand-50/50 dark:hover:bg-slate-700/50 transition-colors"
         onClick={onToggle}
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 font-bold">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-100 text-brand-700 font-bold">
             {getCategoryPath(mainTransaction.category_id)?.charAt(0).toUpperCase() || '?'}
           </div>
           <div className="flex-1">
@@ -286,12 +286,9 @@ const InstallmentGroup: React.FC<{
   const { grouped, standalone } = groupInstallmentTransactions();
 
   return (
-    <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-card dark:shadow-none border border-slate-100/60 dark:border-slate-700/60">
-      <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700">
-        <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">{t('list.recentTransactions')}</h3>
-      </div>
+    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700 overflow-hidden">
       {(Object.keys(grouped).length > 0 || standalone.length > 0) ? (
-        <ul className="divide-y divide-slate-100 dark:divide-slate-700 px-5">
+        <ul className="divide-y divide-brand-50 dark:divide-slate-700 px-5">
           {/* Taksitli işlem grupları */}
           {Object.entries(grouped).map(([parentId, groupTransactions]) => (
             <InstallmentGroup

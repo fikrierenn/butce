@@ -93,7 +93,7 @@ export default function RecurringManager({
     };
 
     return (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-card border border-slate-100/60 p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700 p-5">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">

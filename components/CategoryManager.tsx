@@ -81,7 +81,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, budgets, 
     }
     
     return (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-card border border-slate-100/60 p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700 p-5">
             <h2 className="text-base font-semibold text-slate-800 mb-4">Kategori ve Bütçe Yönetimi</h2>
 
             <div className="p-4 bg-slate-50 rounded-lg space-y-3">

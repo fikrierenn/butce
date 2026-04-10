@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Account, Transaction, Category, TransactionType } from '../types';
+import { Account, Transaction, Category, TransactionType, AccountType } from '../types';
 import TransactionList from '../components/TransactionList';
+import { formatCurrency } from '../lib/currency';
 import { useI18n } from '../lib/i18n';
 
 interface TransactionsScreenProps {
@@ -20,7 +21,7 @@ const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
 }) => {
     const { t } = useI18n();
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterType, setFilterType] = useState<'all' | TransactionType>('all');
+    const [cashFlowMode, setCashFlowMode] = useState<'expense' | 'income'>('expense');
     const [filterAccountId, setFilterAccountId] = useState<string>('');
     const [filterCategoryId, setFilterCategoryId] = useState<string>('');
     const [dateFrom, setDateFrom] = useState('');
@@ -32,32 +33,60 @@ const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
         [categories]
     );
 
+    // Cash Flow toggle'a bağlı tür filtresi
+    const filterType = cashFlowMode === 'expense' ? TransactionType.EXPENSE : TransactionType.INCOME;
+
     const filteredTransactions = useMemo(() => {
-        return transactions.filter(t => {
-            // Metin arama
+        return transactions.filter(tx => {
+            if (tx.type !== filterType) return false;
             if (searchQuery) {
                 const q = searchQuery.toLowerCase();
-                const matchDesc = t.description.toLowerCase().includes(q);
-                const matchAmount = t.amount.toString().includes(q);
-                const catName = flatCategories.find(c => c.id === t.category_id)?.name?.toLowerCase() || '';
-                const accName = accounts.find(a => a.id === t.account_id)?.name?.toLowerCase() || '';
+                const matchDesc = tx.description.toLowerCase().includes(q);
+                const matchAmount = tx.amount.toString().includes(q);
+                const catName = flatCategories.find(c => c.id === tx.category_id)?.name?.toLowerCase() || '';
+                const accName = accounts.find(a => a.id === tx.account_id)?.name?.toLowerCase() || '';
                 if (!matchDesc && !matchAmount && !catName.includes(q) && !accName.includes(q)) return false;
             }
-            // Tip filtresi
-            if (filterType !== 'all' && t.type !== filterType) return false;
-            // Hesap filtresi
-            if (filterAccountId && t.account_id !== parseInt(filterAccountId) && t.from_account_id !== parseInt(filterAccountId) && t.to_account_id !== parseInt(filterAccountId)) return false;
-            // Kategori filtresi
-            if (filterCategoryId && t.category_id !== parseInt(filterCategoryId)) return false;
-            // Tarih filtresi
-            if (dateFrom && t.date < dateFrom) return false;
-            if (dateTo && t.date > dateTo) return false;
+            if (filterAccountId && tx.account_id !== parseInt(filterAccountId)) return false;
+            if (filterCategoryId && tx.category_id !== parseInt(filterCategoryId)) return false;
+            if (dateFrom && tx.date < dateFrom) return false;
+            if (dateTo && tx.date > dateTo) return false;
             return true;
         });
-    }, [transactions, searchQuery, filterType, filterAccountId, filterCategoryId, dateFrom, dateTo, flatCategories, accounts]);
+    }, [transactions, filterType, searchQuery, filterAccountId, filterCategoryId, dateFrom, dateTo, flatCategories, accounts]);
+
+    // Bu ayın toplamı
+    const monthlyTotal = useMemo(() => {
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        return transactions
+            .filter(tx => tx.type === filterType && tx.date >= firstDay)
+            .reduce((sum, tx) => sum + tx.amount, 0);
+    }, [transactions, filterType]);
+
+    // Öne çıkan hesap: en fazla işlemi olan veya ilk hesap
+    const featuredAccount = useMemo(() => {
+        if (accounts.length === 0) return null;
+        const counts = new Map<number, number>();
+        transactions.forEach(tx => {
+            if (tx.account_id) counts.set(tx.account_id, (counts.get(tx.account_id) || 0) + 1);
+        });
+        const mostUsed = accounts
+            .slice()
+            .sort((a, b) => (counts.get(b.id) || 0) - (counts.get(a.id) || 0))[0];
+        return mostUsed || accounts[0];
+    }, [accounts, transactions]);
+
+    const accountTypeLabel = (type: AccountType) => {
+        switch (type) {
+            case AccountType.CREDIT_CARD: return 'Kredi Kartı';
+            case AccountType.BANK: return 'Banka Hesabı';
+            case AccountType.CASH: return 'Nakit';
+            default: return '';
+        }
+    };
 
     const activeFilterCount = [
-        filterType !== 'all',
         filterAccountId !== '',
         filterCategoryId !== '',
         dateFrom !== '',
@@ -65,19 +94,161 @@ const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
     ].filter(Boolean).length;
 
     const clearFilters = () => {
-        setFilterType('all');
         setFilterAccountId('');
         setFilterCategoryId('');
         setDateFrom('');
         setDateTo('');
     };
 
-    const inputClass = "w-full px-3.5 py-2 bg-slate-50/50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all";
+    const inputClass = "w-full px-3.5 py-2 bg-brand-50/50 dark:bg-slate-700/50 border border-brand-100 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30 focus:border-brand-500 transition-all";
+
+    // Bu hesaba ait toplam işlem sayısı
+    const featuredTxCount = useMemo(() => {
+        if (!featuredAccount) return 0;
+        return transactions.filter(tx => tx.account_id === featuredAccount.id).length;
+    }, [featuredAccount, transactions]);
 
     return (
-        <div className="space-y-4 animate-fade-in">
-            {/* Arama Barı */}
-            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-card dark:shadow-none border border-slate-100/60 dark:border-slate-700/60 p-4">
+        <div className="space-y-5 animate-fade-in">
+            {/* Gider / Gelir Toggle */}
+            <div className="bg-white dark:bg-slate-800 rounded-full p-1.5 shadow-card border border-brand-100 dark:border-slate-700 flex">
+                <button
+                    type="button"
+                    onClick={() => setCashFlowMode('expense')}
+                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${
+                        cashFlowMode === 'expense'
+                            ? 'bg-brand-400 text-surface-dark shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                >
+                    Gider
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setCashFlowMode('income')}
+                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${
+                        cashFlowMode === 'income'
+                            ? 'bg-brand-400 text-surface-dark shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                >
+                    Gelir
+                </button>
+            </div>
+
+            {/* Aylık Toplam */}
+            <div className="flex items-baseline justify-between px-1">
+                <div>
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        {cashFlowMode === 'expense' ? 'Bu Ay Gider' : 'Bu Ay Gelir'}
+                    </p>
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-0.5 tracking-tight">
+                        {formatCurrency(monthlyTotal)}
+                    </p>
+                </div>
+            </div>
+
+            {/* Öne çıkan hesap kartı */}
+            {featuredAccount && (
+                <div className="relative bg-gradient-to-br from-surface-dark via-[#142015] to-[#1a2a1a] rounded-3xl p-5 text-white shadow-card-hover overflow-hidden">
+                    <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-brand-500/10" />
+                    <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-brand-500/5 to-transparent" />
+
+                    <div className="relative">
+                        <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">En Aktif Hesap</p>
+                                <p className="text-lg font-bold text-white mt-0.5 truncate">
+                                    {featuredAccount.name}
+                                </p>
+                            </div>
+                            <div className="bg-brand-400/20 border border-brand-400/40 rounded-full px-3 py-1 shrink-0">
+                                <span className="text-[10px] font-bold text-brand-300 uppercase tracking-wider">
+                                    {accountTypeLabel(featuredAccount.type)}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Kart numarası + son kullanma (sadece kredi kartı için) */}
+                        {featuredAccount.type === AccountType.CREDIT_CARD && (featuredAccount.card_number || featuredAccount.expiry_date) && (
+                            <div className="mt-5 flex items-center gap-4">
+                                {featuredAccount.card_number && (
+                                    <p className="text-base font-mono font-bold tracking-wider text-white/90">
+                                        •••• •••• •••• {featuredAccount.card_number}
+                                    </p>
+                                )}
+                                {featuredAccount.expiry_date && (
+                                    <div className="ml-auto">
+                                        <p className="text-[9px] text-white/50 uppercase tracking-wider">Son Kull.</p>
+                                        <p className="text-xs font-bold text-white">{featuredAccount.expiry_date}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="mt-5">
+                            <p className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">Bakiye</p>
+                            <p className={`text-2xl font-bold tracking-tight mt-0.5 ${
+                                featuredAccount.balance >= 0 ? 'text-brand-300' : 'text-red-400'
+                            }`}>
+                                {formatCurrency(featuredAccount.balance)}
+                            </p>
+                        </div>
+
+                        {/* Kredi kartı için ekstre/ödeme günleri */}
+                        {featuredAccount.type === AccountType.CREDIT_CARD && (featuredAccount.statement_date || featuredAccount.payment_due_date) && (
+                            <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-4">
+                                {featuredAccount.statement_date && (
+                                    <div>
+                                        <p className="text-[10px] text-white/50 uppercase tracking-wider">Ekstre Kesim</p>
+                                        <p className="text-sm font-bold text-white mt-0.5">
+                                            Her ayın {featuredAccount.statement_date}.
+                                        </p>
+                                    </div>
+                                )}
+                                {featuredAccount.payment_due_date && (
+                                    <div>
+                                        <p className="text-[10px] text-white/50 uppercase tracking-wider">Son Ödeme</p>
+                                        <p className="text-sm font-bold text-white mt-0.5">
+                                            Her ayın {featuredAccount.payment_due_date}.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] text-white/50 uppercase tracking-wider">Toplam İşlem</p>
+                                <p className="text-sm font-bold text-white mt-0.5">{featuredTxCount}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setFilterAccountId(String(featuredAccount.id))}
+                                className="text-xs font-semibold text-brand-300 hover:text-brand-200 flex items-center gap-1"
+                            >
+                                Bu hesabı filtrele
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Geçmiş başlığı */}
+            <div className="flex items-center justify-between px-1">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                    {cashFlowMode === 'expense' ? 'Gider Geçmişi' : 'Gelir Geçmişi'}
+                </h3>
+                <span className="text-xs text-slate-400">
+                    {filteredTransactions.length} kayıt
+                </span>
+            </div>
+
+            {/* Search + Filter */}
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700 p-4">
                 <div className="flex gap-2">
                     <div className="relative flex-1">
                         <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +259,7 @@ const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder={t('search.placeholder')}
-                            className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50/50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+                            className="w-full pl-9 pr-3.5 py-2.5 bg-brand-50/50 dark:bg-slate-700/50 border border-brand-100 dark:border-slate-600 rounded-2xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30 focus:border-brand-500 transition-all"
                         />
                         {searchQuery && (
                             <button
@@ -103,50 +274,25 @@ const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
                     </div>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`px-3 py-2.5 rounded-xl border text-sm font-medium transition-all flex items-center gap-1.5 ${
+                        className={`px-3 py-2.5 rounded-2xl border text-sm font-semibold transition-all flex items-center gap-1.5 ${
                             showFilters || activeFilterCount > 0
-                                ? 'bg-brand-50 border-brand-200 text-brand-700'
-                                : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                                ? 'bg-brand-100 border-brand-200 text-brand-800'
+                                : 'border-brand-100 text-slate-500 hover:bg-brand-50'
                         }`}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                         </svg>
-                        {t('search.filter')}
                         {activeFilterCount > 0 && (
-                            <span className="w-5 h-5 bg-brand-600 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                            <span className="w-5 h-5 bg-brand-500 text-surface-dark text-xs rounded-full flex items-center justify-center font-bold">
                                 {activeFilterCount}
                             </span>
                         )}
                     </button>
                 </div>
 
-                {/* Filtreler */}
                 {showFilters && (
-                    <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700 space-y-3 animate-fade-in">
-                        {/* Tip Filtresi */}
-                        <div className="grid grid-cols-4 gap-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 p-1">
-                            {[
-                                { value: 'all' as const, label: t('search.all') },
-                                { value: TransactionType.EXPENSE, label: t('type.expense') },
-                                { value: TransactionType.INCOME, label: t('type.income') },
-                                { value: TransactionType.TRANSFER, label: t('type.transfer') },
-                            ].map(({ value, label }) => (
-                                <button
-                                    key={value}
-                                    onClick={() => setFilterType(value)}
-                                    className={`px-2 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                                        filterType === value
-                                            ? 'bg-white dark:bg-slate-600 text-brand-700 dark:text-brand-300 shadow-sm'
-                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-                                    }`}
-                                >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Hesap + Kategori */}
+                    <div className="mt-3 pt-3 border-t border-brand-100 dark:border-slate-700 space-y-3 animate-fade-in">
                         <div className="grid grid-cols-2 gap-2">
                             <select
                                 value={filterAccountId}
@@ -169,46 +315,22 @@ const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
                                 ))}
                             </select>
                         </div>
-
-                        {/* Tarih Aralığı */}
                         <div className="grid grid-cols-2 gap-2">
                             <div>
                                 <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">{t('search.dateFrom')}</label>
-                                <input
-                                    type="date"
-                                    value={dateFrom}
-                                    onChange={(e) => setDateFrom(e.target.value)}
-                                    className={inputClass}
-                                />
+                                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={inputClass} />
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">{t('search.dateTo')}</label>
-                                <input
-                                    type="date"
-                                    value={dateTo}
-                                    onChange={(e) => setDateTo(e.target.value)}
-                                    className={inputClass}
-                                />
+                                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={inputClass} />
                             </div>
                         </div>
-
-                        {/* Temizle */}
                         {activeFilterCount > 0 && (
-                            <button
-                                onClick={clearFilters}
-                                className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
-                            >
+                            <button onClick={clearFilters} className="text-xs text-red-500 hover:text-red-600 font-semibold">
                                 {t('search.clearFilters')}
                             </button>
                         )}
                     </div>
-                )}
-
-                {/* Sonuç sayısı */}
-                {(searchQuery || activeFilterCount > 0) && (
-                    <p className="mt-2 text-xs text-slate-400">
-                        {filteredTransactions.length} / {transactions.length} {t('search.showing')}
-                    </p>
                 )}
             </div>
 

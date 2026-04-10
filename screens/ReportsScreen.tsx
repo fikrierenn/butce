@@ -36,13 +36,13 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({
     return (
         <div className="space-y-4">
             {/* Tab Switcher */}
-            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-card dark:shadow-none border border-slate-100/60 dark:border-slate-700/60 p-1.5">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700 p-1.5">
                 <div className="flex gap-1">
                     <button
                         onClick={() => setActiveTab('reports')}
                         className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
                             activeTab === 'reports'
-                                ? 'bg-brand-600 text-white shadow-sm'
+                                ? 'bg-brand-400 text-surface-dark shadow-sm'
                                 : 'text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-slate-700'
                         }`}
                     >
@@ -52,7 +52,7 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({
                         onClick={() => setActiveTab('budgets')}
                         className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
                             activeTab === 'budgets'
-                                ? 'bg-brand-600 text-white shadow-sm'
+                                ? 'bg-brand-400 text-surface-dark shadow-sm'
                                 : 'text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-slate-700'
                         }`}
                     >
@@ -65,7 +65,7 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({
             {activeTab === 'budgets' && (
                 <div className="space-y-4">
                     {/* Ay seçici */}
-                    <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-4 rounded-2xl shadow-card dark:shadow-none border border-slate-100/60 dark:border-slate-700/60">
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700">
                         <div className="flex items-center gap-3">
                             <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('reports.selectMonth')}:</label>
                             <input

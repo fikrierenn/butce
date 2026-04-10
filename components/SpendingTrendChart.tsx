@@ -44,7 +44,7 @@ const SpendingTrendChart: React.FC<SpendingTrendChartProps> = ({ transactions, m
     }, [transactions, monthsBack]);
 
     return (
-        <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-card border border-slate-100/60">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700">
             <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-sm">📈</span>
                 Aylık Harcama Trendi

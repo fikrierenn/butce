@@ -105,7 +105,7 @@ const InviteManager: React.FC = () => {
     return (
         <div className="space-y-4">
             {/* Yeni Davet Oluştur */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-card border border-slate-100/60 p-5">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700 p-5">
                 <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
                     <span className="w-8 h-8 bg-brand-100 rounded-lg flex items-center justify-center text-sm">🎟</span>
                     Yeni Davet Kodu
@@ -164,7 +164,7 @@ const InviteManager: React.FC = () => {
             </div>
 
             {/* Mevcut Davetler */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-card border border-slate-100/60 p-5">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700 p-5">
                 <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
                     <span className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-sm">📋</span>
                     Davetler

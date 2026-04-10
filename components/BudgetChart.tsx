@@ -25,7 +25,7 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ transactions, categories, bud
         {
           label: 'Tutar (₺)',
           data: [totalIncome, totalExpense],
-          backgroundColor: ['#10B981', '#EF4444'],
+          backgroundColor: ['#8fc933', '#EF4444'],
           borderColor: '#FFFFFF',
           borderWidth: 2,
         },
@@ -75,8 +75,8 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ transactions, categories, bud
         {
           label: 'Bütçe',
           data: budgetValues,
-          backgroundColor: '#4F46E5',
-          borderColor: '#4F46E5',
+          backgroundColor: '#8fc933',
+          borderColor: '#6fa821',
           borderWidth: 1,
         },
         {
@@ -114,9 +114,9 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ transactions, categories, bud
           label: 'Giderler',
           data,
           backgroundColor: [
-            '#4F46E5', '#EF4444', '#10B981', '#F59E0B',
-            '#6366F1', '#F87171', '#34D399', '#FBBF24',
-            '#818CF8', '#FCA5A5', '#6EE7B7', '#FCD34D',
+            '#8fc933', '#c2e870', '#568318', '#aadd4a',
+            '#6fa821', '#d4f09a', '#3f6110', '#e6f7c4',
+            '#f97316', '#fbbf24', '#ef4444', '#0ea5e9',
           ],
           borderColor: '#FFFFFF',
           borderWidth: 2,
@@ -177,8 +177,8 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ transactions, categories, bud
   return (
     <div className="space-y-4">
       {/* Gelir/Gider Karşılaştırması */}
-      <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-card border border-slate-100/60">
-        <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700">
+        <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight mb-4 flex items-center gap-2">
           <span className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-sm">💰</span>
           Gelir vs Gider
         </h3>
@@ -207,8 +207,8 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ transactions, categories, bud
 
       {/* Bütçe vs Harcama Karşılaştırması */}
       {budgetVsSpentData.labels.length > 0 && (
-        <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-card border border-slate-100/60">
-          <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight mb-4 flex items-center gap-2">
             <span className="w-8 h-8 bg-brand-100 rounded-lg flex items-center justify-center text-sm">📊</span>
             Bütçe vs Harcama
           </h3>
@@ -232,8 +232,8 @@ const BudgetChart: React.FC<BudgetChartProps> = ({ transactions, categories, bud
 
       {/* Kategoriye Göre Gider Dağılımı */}
       {expenseByCategoryData.labels.length > 0 && (
-        <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-card border border-slate-100/60">
-          <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight mb-4 flex items-center gap-2">
             <span className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-sm">🎯</span>
             Gider Dağılımı
           </h3>

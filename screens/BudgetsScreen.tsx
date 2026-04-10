@@ -27,19 +27,19 @@ const BudgetsScreen: React.FC<BudgetsScreenProps> = ({
     return (
         <div className="space-y-6">
             {/* Ay seçici */}
-            <div className="bg-white p-4 rounded-lg shadow-md">
-                <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700">Ay Seçin:</label>
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700">
+                <div className="flex items-center gap-3 flex-wrap">
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Ay Seçin:</label>
                     <input
                         type="month"
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                        className="px-4 py-2.5 bg-brand-50/50 border border-brand-100 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-400/30 focus:border-brand-500"
                     />
-                    <span className="text-sm text-slate-500">
-                        {new Date(selectedMonth + '-01').toLocaleDateString('tr-TR', { 
-                            year: 'numeric', 
-                            month: 'long' 
+                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                        {new Date(selectedMonth + '-01').toLocaleDateString('tr-TR', {
+                            year: 'numeric',
+                            month: 'long'
                         })}
                     </span>
                 </div>

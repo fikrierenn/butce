@@ -23,9 +23,10 @@ interface TransactionFormProps {
     categories: Category[];
     accounts: Account[];
     initialTransaction?: Transaction | null;
+    initialType?: TransactionType;
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose, onSubmit, onSubmitMultiple, categories, accounts, initialTransaction }) => {
+const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose, onSubmit, onSubmitMultiple, categories, accounts, initialTransaction, initialType }) => {
     const { t } = useI18n();
     const [type, setType] = useState<TransactionType>(TransactionType.EXPENSE);
     const [amount, setAmount] = useState('');
@@ -105,8 +106,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose, onSu
     useEffect(() => {
         if (isOpen) {
             resetForm();
+            if (initialType) setType(initialType);
         }
-    }, [isOpen]);
+    }, [isOpen, initialType]);
 
     useEffect(() => {
         setParentCategoryId('');

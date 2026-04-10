@@ -104,8 +104,8 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
         const subBudgets = group.budgets.filter(b => b.category_id !== group.parent.id);
         
         return (
-            <div key={groupKey} className="mb-6 border border-slate-200 rounded-lg p-4">
-                <h4 className={`text-lg font-semibold mb-3 ${color}`}>
+            <div key={groupKey} className="mb-4 border border-brand-100 dark:border-slate-700 rounded-2xl p-4">
+                <h4 className={`text-base font-bold mb-3 ${color}`}>
                     {group.parent.type === 'expense' ? '💸' : '📈'} {group.parent.name}
                 </h4>
                 
@@ -135,7 +135,7 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
                         </div>
                         <div className="w-full bg-slate-200 rounded-full h-2.5">
                             <div 
-                                className={`h-2.5 rounded-full ${parentBudget.percentage > 90 ? 'bg-red-500' : parentBudget.percentage > 75 ? 'bg-yellow-500' : 'bg-brand-600'}`}
+                                className={`h-2.5 rounded-full ${parentBudget.percentage > 90 ? 'bg-red-500' : parentBudget.percentage > 75 ? 'bg-yellow-500' : 'bg-brand-500'}`}
                                 style={{ width: `${parentBudget.percentage}%` }}
                             ></div>
                         </div>
@@ -179,7 +179,7 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
                                 </div>
                                 <div className="w-16 bg-slate-200 rounded-full h-1.5 ml-2">
                                     <div 
-                                        className={`h-1.5 rounded-full ${b.percentage > 90 ? 'bg-red-500' : b.percentage > 75 ? 'bg-yellow-500' : 'bg-brand-600'}`}
+                                        className={`h-1.5 rounded-full ${b.percentage > 90 ? 'bg-red-500' : b.percentage > 75 ? 'bg-yellow-500' : 'bg-brand-500'}`}
                                         style={{ width: `${b.percentage}%` }}
                                     ></div>
                                 </div>
@@ -195,8 +195,8 @@ const BudgetStatus: React.FC<BudgetStatusProps> = ({ budgets, transactions, cate
     };
 
     return (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-card border border-slate-100/60 p-5">
-            <h3 className="text-base font-semibold text-slate-800 mb-4">Aylık Bütçeler</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700 p-5">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight mb-4">Aylık Bütçeler</h3>
             {budgetData.length > 0 ? (
                 <div>
                     {/* Gider kategorileri */}

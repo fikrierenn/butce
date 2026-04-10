@@ -1,4 +1,8 @@
-const APP_VERSION = '1.1.2';
+// Türkçe Açıklama:
+// Sürüm package.json'dan vite define ile inject edilir (bkz. vite.config.ts).
+// Burada hardcode YOKTUR; tek kaynak package.json'daki "version" alanıdır.
+declare const __APP_VERSION__: string;
+const APP_VERSION = __APP_VERSION__;
 const VERSION_CHECK_URL = 'https://raw.githubusercontent.com/fikrierenn/butce/main/public/version.json';
 
 interface VersionInfo {

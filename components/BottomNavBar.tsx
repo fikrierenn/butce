@@ -48,7 +48,7 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ activeScreen, setActiveScre
                 <div className="w-16 h-16 flex items-center justify-center">
                     <button
                         onClick={onAddTransactionClick}
-                        className="bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-2xl w-14 h-14 flex items-center justify-center shadow-fab hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 -mt-7"
+                        className="bg-gradient-to-br from-brand-400 to-brand-600 text-white rounded-2xl w-14 h-14 flex items-center justify-center shadow-fab hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 -mt-7"
                         aria-label={t('nav.addTransaction')}
                     >
                         <PlusIcon />

@@ -11,7 +11,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
     const initial = (user.email || 'U').charAt(0).toUpperCase();
 
     return (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-card border border-slate-100/60 p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-brand-100 dark:border-slate-700 p-5">
             <div className="flex items-center gap-4 mb-4">
                 {user.user_metadata?.avatar_url ? (
                     <img
