@@ -98,6 +98,21 @@ jobs:
         run: |
           sed -i '/^dependencies {/i configurations.all {\n    exclude group: '\''org.jetbrains.kotlin'\'', module: '\''kotlin-stdlib-jdk7'\''\n    exclude group: '\''org.jetbrains.kotlin'\'', module: '\''kotlin-stdlib-jdk8'\''\n}' android/app/build.gradle
 
+      # Türkçe Açıklama:
+      # androidx.browser 1.9.0 compileSdk 36 + AGP 8.9.1 istiyor ama Capacitor 8
+      # halen compileSdk 35 + AGP 8.7.2 kullanıyor. 1.8.0'a force pin'liyoruz;
+      # Capacitor compileSdk'yi bump edince bu step silinebilir.
+      - name: Pin androidx.browser to 1.8.0 (AGP 8.7.2 uyumlu)
+        run: |
+          cat >> android/app/build.gradle << 'EOF'
+
+          configurations.all {
+              resolutionStrategy {
+                  force 'androidx.browser:browser:1.8.0'
+              }
+          }
+          EOF
+
       - name: Sync Capacitor
         run: npx cap sync android
 
