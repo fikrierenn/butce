@@ -2,7 +2,7 @@
   "version": "1.2.3",
   "build": 10203,
   "minVersion": "1.0.0",
-  "releaseNotes": "SpendMe v1.2.3 - Yeni lime temalı UI + güncelleme kontrolü düzeltildi",
+  "releaseNotes": "SpendMe v1.2.3",
   "apkUrl": "https://github.com/fikrierenn/butce/releases/download/latest/spendme.apk",
   "forceUpdate": false
 }
