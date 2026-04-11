@@ -46,6 +46,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose, onSu
     const [smsText, setSmsText] = useState('');
     const [smsParsedResults, setSmsParsedResults] = useState<any[]>([]);
     const [showSmsResults, setShowSmsResults] = useState(false);
+    const [aiError, setAiError] = useState<string | null>(null);
 
     // AI sonuçlarını form alanlarına uygula
     const applyAiResult = (result: any) => {
@@ -119,12 +120,18 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose, onSu
         if (!aiPrompt.trim()) return;
 
         setIsProcessing(true);
+        setAiError(null);
         try {
             const result = await parseTransactionWithGemini(aiPrompt, categories, accounts);
+            if (!result) {
+                setAiError('AI boş cevap döndü. Metni daha açık yazmayı deneyin.');
+                return;
+            }
             applyAiResult(result);
-            if (result) setAiPrompt('');
-        } catch (error) {
+            setAiPrompt('');
+        } catch (error: any) {
             console.error('AI analiz hatası:', error);
+            setAiError(error?.message || 'AI analizi başarısız oldu. Tekrar deneyin.');
         } finally {
             setIsProcessing(false);
         }
@@ -140,12 +147,18 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose, onSu
             setReceiptPreview(previewUrl);
 
             setIsProcessing(true);
+            setAiError(null);
 
             const { base64, mimeType } = await resizeImage(file);
             const result = await parseReceiptWithGemini(base64, mimeType, categories, accounts);
+            if (!result) {
+                setAiError('Fiş okunamadı. Daha net bir fotoğraf deneyin.');
+                return;
+            }
             applyAiResult(result);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Fiş tarama hatası:', error);
+            setAiError(error?.message || 'Fiş tarama başarısız. Tekrar deneyin.');
         } finally {
             setIsProcessing(false);
         }
@@ -155,20 +168,25 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose, onSu
         if (!smsText.trim()) return;
 
         setIsProcessing(true);
+        setAiError(null);
         try {
             const results = await parseSmsWithGemini(smsText, categories, accounts);
 
-            if (results && results.length > 0) {
-                if (results.length === 1) {
-                    applyAiResult(results[0]);
-                    setSmsText('');
-                } else {
-                    setSmsParsedResults(results);
-                    setShowSmsResults(true);
-                }
+            if (!results || results.length === 0) {
+                setAiError('SMS ayrıştırılamadı. Metni kontrol edin.');
+                return;
             }
-        } catch (error) {
+
+            if (results.length === 1) {
+                applyAiResult(results[0]);
+                setSmsText('');
+            } else {
+                setSmsParsedResults(results);
+                setShowSmsResults(true);
+            }
+        } catch (error: any) {
             console.error('SMS analiz hatası:', error);
+            setAiError(error?.message || 'SMS analizi başarısız. Tekrar deneyin.');
         } finally {
             setIsProcessing(false);
         }
@@ -243,6 +261,26 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose, onSu
                             <SparklesIcon className="h-4 w-4 text-purple-600" />
                             <h3 className="text-sm font-semibold text-purple-800">{t('ai.title')}</h3>
                         </div>
+
+                        {/* Hata mesajı */}
+                        {aiError && (
+                            <div className="mb-3 p-2.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2">
+                                <svg className="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <p className="text-xs text-red-700 leading-snug flex-1">{aiError}</p>
+                                <button
+                                    type="button"
+                                    onClick={() => setAiError(null)}
+                                    className="text-red-400 hover:text-red-600 shrink-0"
+                                    aria-label="Kapat"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
 
                         {/* Mod Seçici */}
                         <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 mb-3">

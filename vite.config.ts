@@ -18,7 +18,11 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
+        'process.env.XAI_API_KEY': JSON.stringify(env.XAI_API_KEY),
+        'process.env.XAI_MODEL': JSON.stringify(env.XAI_MODEL),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        'process.env.GEMINI_MODEL': JSON.stringify(env.GEMINI_MODEL),
+        'process.env.GEMINI_VISION_MODEL': JSON.stringify(env.GEMINI_VISION_MODEL),
         'process.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL),
         'process.env.SUPABASE_ANON_KEY': JSON.stringify(env.SUPABASE_ANON_KEY),
         __APP_VERSION__: JSON.stringify(pkg.version),
