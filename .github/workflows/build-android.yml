@@ -63,8 +63,15 @@ jobs:
           git diff --cached --quiet || git commit -m "chore: auto-update version.json to $VERSION"
           git push || true
 
-      - name: Add Android platform
-        run: npx cap add android
+      # Türkçe Açıklama:
+      # Runner'da herhangi bir sebeple (cache, önceki artifact, git artığı)
+      # android/ dizini kalmış olabilir. cap add ona "already exists" hatası
+      # verir. Her run temiz native project üretebilsin diye önce silip
+      # sonra ekliyoruz.
+      - name: Add Android platform (clean state)
+        run: |
+          rm -rf android
+          npx cap add android
 
       # Türkçe Açıklama:
       # cap add android yeni bir build.gradle üretir (versionName "1.0",
