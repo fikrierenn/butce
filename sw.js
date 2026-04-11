@@ -2,13 +2,28 @@
 // Service Worker - PWA için offline çalışma ve cache yönetimi
 // Bu dosya uygulamanın ana kaynaklarını cache'ler ve offline erişim sağlar
 
-const CACHE_NAME = 'spendme-v2';
+// Her sürüm için ayrı cache; sürüm artarsa eski cache otomatik silinir.
+const CACHE_NAME = 'spendme-v3';
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
   'https://cdn.tailwindcss.com'
 ];
+
+// Bu pattern'lere uyan istekler HİÇ cache'lenmez, her zaman network'ten okunur.
+// version.json sürüm kontrolü için kritik — cache'lenirse kullanıcı eski
+// sürümde takılır. JS bundle'lar hash'li isimlerde zaten deterministik ama
+// index.html ve version.json mutlaka fresh olmalı.
+const NO_CACHE_PATTERNS = [
+  /version\.json/,
+  /\/assets\/index-[^/]*\.js$/,
+  /githubusercontent\.com/,
+  /api\./,
+  /supabase/,
+];
+
+const shouldBypassCache = (url) => NO_CACHE_PATTERNS.some(p => p.test(url));
 
 // Service Worker kurulumu - cache'leme
 self.addEventListener('install', (event) => {
@@ -42,16 +57,27 @@ self.addEventListener('activate', (event) => {
 });
 
 // Fetch stratejisi: Network First, Cache Fallback
+// NO_CACHE_PATTERNS'a uyan istekler hiç cache'lenmez (version.json, bundle).
 self.addEventListener('fetch', (event) => {
-  // Sadece GET isteklerini cache'le
   if (event.request.method !== 'GET') {
+    return;
+  }
+
+  const url = event.request.url;
+
+  // Bypass: version kontrolü, bundle, API — her zaman network
+  if (shouldBypassCache(url)) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' }).catch(() =>
+        caches.match(event.request).then(r => r || Response.error())
+      )
+    );
     return;
   }
 
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Başarılı yanıtı cache'le
         if (response && response.status === 200) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -61,12 +87,10 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // Network hatası varsa cache'den dön
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) {
             return cachedResponse;
           }
-          // Cache'de de yoksa offline sayfası göster
           return caches.match('/');
         });
       })

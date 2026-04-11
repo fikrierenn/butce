@@ -1,7 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabaseClient';
-import { Transaction, Account, Category, Budget, TransactionType, RecurringTransaction, RecurringFrequency } from './types';
+import { Transaction, Account, Category, Budget, TransactionType, RecurringTransaction, RecurringFrequency, Notification } from './types';
+import {
+    fetchNotifications,
+    triggerVersionUpdateNotification,
+    triggerBudgetNotifications,
+    triggerCreditCardDueNotifications,
+    triggerInstallmentUpcomingNotifications,
+    triggerRecurringAppliedNotification,
+} from './lib/notifications';
+import NotificationsModal from './components/NotificationsModal';
 
 import Auth from './components/Auth';
 import Header from './components/Header';
@@ -37,6 +46,8 @@ const App: React.FC = () => {
     const [activeScreen, setActiveScreen] = useState('home');
     const [isTransactionFormOpen, setTransactionFormOpen] = useState(false);
     const [transactionFormInitialType, setTransactionFormInitialType] = useState<TransactionType | undefined>(undefined);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [isNotificationsModalOpen, setNotificationsModalOpen] = useState(false);
     const [isAddAccountModalOpen, setAddAccountModalOpen] = useState(false);
     const [isEditAccountModalOpen, setEditAccountModalOpen] = useState(false);
     const [isEditTransactionModalOpen, setEditTransactionModalOpen] = useState(false);
@@ -97,6 +108,28 @@ const App: React.FC = () => {
         if (recurringData) {
             await processRecurringTransactions(currentUser, recurringData);
         }
+
+        // Türkçe Açıklama:
+        // Bildirim tetiklerini veri geldikten sonra çalıştır. Her biri
+        // idempotent — aynı olay için tek kez düşer (dedupe_key unique).
+        try {
+            await triggerVersionUpdateNotification(currentUser.id);
+            if (budgetsData && transactionsData && categoryTree) {
+                await triggerBudgetNotifications(currentUser.id, budgetsData, transactionsData, categoryTree);
+            }
+            if (accountsData) {
+                await triggerCreditCardDueNotifications(currentUser.id, accountsData);
+            }
+            if (transactionsData) {
+                await triggerInstallmentUpcomingNotifications(currentUser.id, transactionsData);
+            }
+        } catch (e) {
+            console.error('[notifications] trigger error', e);
+        }
+
+        // Bildirimleri çek
+        const notifs = await fetchNotifications(currentUser.id);
+        setNotifications(notifs);
 
     }, [selectedMonth]);
 
@@ -683,10 +716,23 @@ const App: React.FC = () => {
                 to_account_id: rec.to_account_id,
             };
 
-            const { error: txError } = await supabase.from('but_transactions').insert(txData);
+            const { data: insertedTx, error: txError } = await supabase
+                .from('but_transactions')
+                .insert(txData)
+                .select()
+                .single();
             if (txError) {
                 console.error('Recurring transaction error:', txError);
                 continue;
+            }
+
+            // Tekrarlayan işlem bildirim tetiği (idempotent: tx.id ile)
+            if (insertedTx?.id) {
+                try {
+                    await triggerRecurringAppliedNotification(currentUser.id, rec, insertedTx.id);
+                } catch (e) {
+                    console.error('[notifications] recurring trigger error', e);
+                }
             }
 
             // Sonraki çalışma tarihini hesapla
@@ -877,7 +923,14 @@ const App: React.FC = () => {
     return (
         <div className="bg-brand-50 dark:bg-surface-dark min-h-screen font-sans">
             <div className="max-w-2xl mx-auto bg-brand-50 dark:bg-surface-dark min-h-screen flex flex-col">
-                <Header title={screenTitles[activeScreen]} user={user} onLogout={handleLogout} activeScreen={activeScreen} />
+                <Header
+                    title={screenTitles[activeScreen]}
+                    user={user}
+                    onLogout={handleLogout}
+                    activeScreen={activeScreen}
+                    unreadCount={notifications.filter(n => !n.read_at).length}
+                    onBellClick={() => setNotificationsModalOpen(true)}
+                />
                 <main className="flex-grow p-4 pb-24">
                     {renderScreen()}
                 </main>
@@ -931,6 +984,18 @@ const App: React.FC = () => {
             )}
             <InstallPWAButton />
             <UpdateBanner />
+            {user && (
+                <NotificationsModal
+                    isOpen={isNotificationsModalOpen}
+                    onClose={() => setNotificationsModalOpen(false)}
+                    userId={user.id}
+                    notifications={notifications}
+                    onRefresh={async () => {
+                        const notifs = await fetchNotifications(user.id);
+                        setNotifications(notifs);
+                    }}
+                />
+            )}
         </div>
     );
 };

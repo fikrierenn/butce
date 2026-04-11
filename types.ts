@@ -98,6 +98,28 @@ export interface RecurringTransaction {
     updated_at: string;
 }
 
+export type NotificationType =
+    | 'version_update'
+    | 'budget_warning'
+    | 'budget_overshoot'
+    | 'credit_statement'
+    | 'credit_payment_due'
+    | 'recurring_applied'
+    | 'installment_upcoming';
+
+export interface Notification {
+    id: number;
+    user_id: string;
+    type: NotificationType;
+    title: string;
+    body: string;
+    related_id?: number | null;
+    metadata?: Record<string, any> | null;
+    dedupe_key: string;
+    read_at?: string | null;
+    created_at: string;
+}
+
 export interface Budget {
     id: number;
     user_id: string;
