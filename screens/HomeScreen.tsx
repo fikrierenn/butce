@@ -5,6 +5,7 @@ import BankIcon from '../components/icons/BankIcon';
 import CreditCardIcon from '../components/icons/CreditCardIcon';
 import WalletIcon from '../components/icons/WalletIcon';
 import ChartBarIcon from '../components/icons/ChartBarIcon';
+import CreditCardDetailsModal from '../components/CreditCardDetailsModal';
 import { formatCurrency } from '../lib/currency';
 import { useI18n } from '../lib/i18n';
 
@@ -40,6 +41,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 }) => {
     const { t } = useI18n();
     const [balanceHidden, setBalanceHidden] = useState(false);
+    const [isCreditCardModalOpen, setCreditCardModalOpen] = useState(false);
 
     const recentTransactions = useMemo(() => {
         return [...transactions]
@@ -201,7 +203,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                     {balanceSlides.map((slide) => (
                         <div
                             key={slide.key}
-                            className={`relative shrink-0 w-full snap-center bg-gradient-to-br ${slide.gradient} rounded-3xl p-6 shadow-card-hover overflow-hidden`}
+                            onClick={slide.key === 'credit' ? () => setCreditCardModalOpen(true) : undefined}
+                            className={`relative shrink-0 w-full snap-center bg-gradient-to-br ${slide.gradient} rounded-3xl p-6 shadow-card-hover overflow-hidden ${slide.key === 'credit' ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''}`}
                         >
                             <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full" />
                             <div className="absolute -bottom-16 -left-10 w-48 h-48 bg-white/5 rounded-full" />
@@ -282,12 +285,20 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
                                 {/* Diğer slide'lar için alt bilgi */}
                                 {slide.key !== 'total' && (
-                                    <div className="mt-5 bg-white/30 backdrop-blur-sm rounded-2xl px-4 py-3 border border-white/20">
+                                    <div className="mt-5 bg-white/30 backdrop-blur-sm rounded-2xl px-4 py-3 border border-white/20 flex items-center justify-between">
                                         <p className="text-[11px] font-semibold text-surface-dark/70">
                                             {slide.key === 'cash' && 'Elindeki nakit toplamı'}
                                             {slide.key === 'bank' && 'Banka hesaplarının toplamı'}
                                             {slide.key === 'credit' && (creditTotal < 0 ? 'Toplam kredi kartı borcu' : 'Kredi kartı bakiyesi')}
                                         </p>
+                                        {slide.key === 'credit' && (
+                                            <span className="text-[10px] font-bold text-surface-dark/80 flex items-center gap-1">
+                                                Detay
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </span>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -389,6 +400,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                     onEditTransaction={onEditTransaction}
                 />
             </div>
+
+            <CreditCardDetailsModal
+                isOpen={isCreditCardModalOpen}
+                onClose={() => setCreditCardModalOpen(false)}
+                accounts={accounts}
+            />
         </div>
     );
 };

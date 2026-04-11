@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Account, Transaction, Category, TransactionType, AccountType } from '../types';
+import { Account, Transaction, Category, TransactionType } from '../types';
 import TransactionList from '../components/TransactionList';
 import { formatCurrency } from '../lib/currency';
 import { useI18n } from '../lib/i18n';
@@ -64,28 +64,6 @@ const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
             .reduce((sum, tx) => sum + tx.amount, 0);
     }, [transactions, filterType]);
 
-    // Öne çıkan hesap: en fazla işlemi olan veya ilk hesap
-    const featuredAccount = useMemo(() => {
-        if (accounts.length === 0) return null;
-        const counts = new Map<number, number>();
-        transactions.forEach(tx => {
-            if (tx.account_id) counts.set(tx.account_id, (counts.get(tx.account_id) || 0) + 1);
-        });
-        const mostUsed = accounts
-            .slice()
-            .sort((a, b) => (counts.get(b.id) || 0) - (counts.get(a.id) || 0))[0];
-        return mostUsed || accounts[0];
-    }, [accounts, transactions]);
-
-    const accountTypeLabel = (type: AccountType) => {
-        switch (type) {
-            case AccountType.CREDIT_CARD: return 'Kredi Kartı';
-            case AccountType.BANK: return 'Banka Hesabı';
-            case AccountType.CASH: return 'Nakit';
-            default: return '';
-        }
-    };
-
     const activeFilterCount = [
         filterAccountId !== '',
         filterCategoryId !== '',
@@ -100,13 +78,7 @@ const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
         setDateTo('');
     };
 
-    const inputClass = "w-full px-3.5 py-2 bg-brand-50/50 dark:bg-slate-700/50 border border-brand-100 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30 focus:border-brand-500 transition-all";
-
-    // Bu hesaba ait toplam işlem sayısı
-    const featuredTxCount = useMemo(() => {
-        if (!featuredAccount) return 0;
-        return transactions.filter(tx => tx.account_id === featuredAccount.id).length;
-    }, [featuredAccount, transactions]);
+    const inputClass = "w-full px-3.5 py-2 bg-brand-50/50 border border-brand-100 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30 focus:border-brand-500 transition-all";
 
     return (
         <div className="space-y-5 animate-fade-in">
@@ -147,95 +119,6 @@ const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
                     </p>
                 </div>
             </div>
-
-            {/* Öne çıkan hesap kartı */}
-            {featuredAccount && (
-                <div className="relative bg-gradient-to-br from-surface-dark via-[#142015] to-[#1a2a1a] rounded-3xl p-5 text-white shadow-card-hover overflow-hidden">
-                    <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-brand-500/10" />
-                    <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-brand-500/5 to-transparent" />
-
-                    <div className="relative">
-                        <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">En Aktif Hesap</p>
-                                <p className="text-lg font-bold text-white mt-0.5 truncate">
-                                    {featuredAccount.name}
-                                </p>
-                            </div>
-                            <div className="bg-brand-400/20 border border-brand-400/40 rounded-full px-3 py-1 shrink-0">
-                                <span className="text-[10px] font-bold text-brand-300 uppercase tracking-wider">
-                                    {accountTypeLabel(featuredAccount.type)}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Kart numarası + son kullanma (sadece kredi kartı için) */}
-                        {featuredAccount.type === AccountType.CREDIT_CARD && (featuredAccount.card_number || featuredAccount.expiry_date) && (
-                            <div className="mt-5 flex items-center gap-4">
-                                {featuredAccount.card_number && (
-                                    <p className="text-base font-mono font-bold tracking-wider text-white/90">
-                                        •••• •••• •••• {featuredAccount.card_number}
-                                    </p>
-                                )}
-                                {featuredAccount.expiry_date && (
-                                    <div className="ml-auto">
-                                        <p className="text-[9px] text-white/50 uppercase tracking-wider">Son Kull.</p>
-                                        <p className="text-xs font-bold text-white">{featuredAccount.expiry_date}</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        <div className="mt-5">
-                            <p className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">Bakiye</p>
-                            <p className={`text-2xl font-bold tracking-tight mt-0.5 ${
-                                featuredAccount.balance >= 0 ? 'text-brand-300' : 'text-red-400'
-                            }`}>
-                                {formatCurrency(featuredAccount.balance)}
-                            </p>
-                        </div>
-
-                        {/* Kredi kartı için ekstre/ödeme günleri */}
-                        {featuredAccount.type === AccountType.CREDIT_CARD && (featuredAccount.statement_date || featuredAccount.payment_due_date) && (
-                            <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-4">
-                                {featuredAccount.statement_date && (
-                                    <div>
-                                        <p className="text-[10px] text-white/50 uppercase tracking-wider">Ekstre Kesim</p>
-                                        <p className="text-sm font-bold text-white mt-0.5">
-                                            Her ayın {featuredAccount.statement_date}.
-                                        </p>
-                                    </div>
-                                )}
-                                {featuredAccount.payment_due_date && (
-                                    <div>
-                                        <p className="text-[10px] text-white/50 uppercase tracking-wider">Son Ödeme</p>
-                                        <p className="text-sm font-bold text-white mt-0.5">
-                                            Her ayın {featuredAccount.payment_due_date}.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] text-white/50 uppercase tracking-wider">Toplam İşlem</p>
-                                <p className="text-sm font-bold text-white mt-0.5">{featuredTxCount}</p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setFilterAccountId(String(featuredAccount.id))}
-                                className="text-xs font-semibold text-brand-300 hover:text-brand-200 flex items-center gap-1"
-                            >
-                                Bu hesabı filtrele
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Geçmiş başlığı */}
             <div className="flex items-center justify-between px-1">
