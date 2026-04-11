@@ -1,8 +1,8 @@
 {
-  "version": "1.2.3",
-  "build": 10203,
+  "version": "1.2.4",
+  "build": 10204,
   "minVersion": "1.0.0",
-  "releaseNotes": "SpendMe v1.2.3",
+  "releaseNotes": "SpendMe v1.2.4",
   "apkUrl": "https://github.com/fikrierenn/butce/releases/download/latest/spendme.apk",
   "forceUpdate": false
 }

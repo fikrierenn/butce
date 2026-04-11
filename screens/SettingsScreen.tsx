@@ -18,22 +18,27 @@ const VersionCard: React.FC = () => {
     const [newVersion, setNewVersion] = useState('');
     const [apkUrl, setApkUrl] = useState('');
     const [releaseNotes, setReleaseNotes] = useState('');
+    const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null);
+
+    const runCheck = async () => {
+        setUpdateStatus('checking');
+        const result = await checkForUpdate();
+        if (result.hasUpdate && result.versionInfo) {
+            setUpdateStatus('available');
+            setNewVersion(result.versionInfo.version);
+            setApkUrl(result.versionInfo.apkUrl);
+            setReleaseNotes(result.versionInfo.releaseNotes);
+        } else if (result.versionInfo) {
+            setUpdateStatus('latest');
+            setNewVersion(result.versionInfo.version);
+        } else {
+            setUpdateStatus('error');
+        }
+        setLastCheckedAt(new Date());
+    };
 
     useEffect(() => {
-        const check = async () => {
-            const result = await checkForUpdate();
-            if (result.hasUpdate && result.versionInfo) {
-                setUpdateStatus('available');
-                setNewVersion(result.versionInfo.version);
-                setApkUrl(result.versionInfo.apkUrl);
-                setReleaseNotes(result.versionInfo.releaseNotes);
-            } else if (result.versionInfo) {
-                setUpdateStatus('latest');
-            } else {
-                setUpdateStatus('error');
-            }
-        };
-        check();
+        runCheck();
     }, []);
 
     return (
@@ -48,8 +53,8 @@ const VersionCard: React.FC = () => {
                 )}
 
                 {updateStatus === 'latest' && (
-                    <div className="mt-3 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
-                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">✓ En güncel sürüm</p>
+                    <div className="mt-3 px-3 py-1.5 bg-emerald-50 rounded-xl">
+                        <p className="text-xs text-emerald-600 font-medium">✓ En güncel sürüm{newVersion ? ` (v${newVersion})` : ''}</p>
                     </div>
                 )}
 
@@ -76,7 +81,24 @@ const VersionCard: React.FC = () => {
                     <p className="text-xs text-slate-400 mt-3">Güncelleme kontrol edilemedi</p>
                 )}
 
-                <p className="text-[11px] text-slate-300 dark:text-slate-600 mt-3">Yapay zeka destekli kişisel finans</p>
+                <button
+                    type="button"
+                    onClick={runCheck}
+                    disabled={updateStatus === 'checking'}
+                    className="mt-3 text-[11px] font-semibold text-brand-700 hover:text-brand-800 disabled:text-slate-400 flex items-center gap-1"
+                >
+                    <svg className={`w-3 h-3 ${updateStatus === 'checking' ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    {updateStatus === 'checking' ? 'Kontrol ediliyor...' : 'Şimdi kontrol et'}
+                </button>
+                {lastCheckedAt && updateStatus !== 'checking' && (
+                    <p className="text-[10px] text-slate-400 mt-1">
+                        Son kontrol: {lastCheckedAt.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </p>
+                )}
+
+                <p className="text-[11px] text-slate-300 mt-3">Yapay zeka destekli kişisel finans</p>
             </div>
         </div>
     );
