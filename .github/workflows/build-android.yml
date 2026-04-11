@@ -66,6 +66,16 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      # Türkçe Açıklama:
+      # cap add android yeni bir build.gradle üretir (versionName "1.0",
+      # versionCode 1). sync-version.mjs'yi tekrar çağırarak bu dosyayı
+      # package.json'daki sürümle eşitliyoruz. Böylece APK metadata'sında
+      # doğru sürüm etiketi oluşur (Play Store / Settings sayfası için
+      # önemli, ama uygulama içi update check'i bundle'daki __APP_VERSION__
+      # kullanıyor — hâlâ doğru).
+      - name: Sync version into fresh android/build.gradle
+        run: npm run version:sync
+
       - name: Generate app icons
         run: |
           sudo apt-get install -y librsvg2-bin
