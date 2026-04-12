@@ -51,14 +51,24 @@ export const parseTransactionWithAI = async (
 
 export const parseReceiptWithAI = async (
     imageBase64: string,
-    _mimeType: string,
+    mimeType: string,
     categories: Category[],
     accounts: Account[],
 ): Promise<any | null> => {
-    // Not: Grok text-only olduğu için receipt'i text olarak gönderiyoruz.
-    // Kullanıcıdan fiş detayını yazmasını isteyebiliriz veya
-    // ileride vision modeli eklenebilir.
-    return callAIProxy('receipt', imageBase64, categories, accounts);
+    // Receipt: Groq Llama 4 Scout vision modeli ile fiş fotoğrafı analiz edilir
+    const cats = categories.map(c => ({
+        id: c.id, name: c.name, type: c.type,
+        subcategories: c.subcategories?.map(s => ({ id: s.id, name: s.name })),
+    }));
+    const accs = accounts.map(a => ({ id: a.id, name: a.name, type: a.type }));
+
+    const { data, error } = await supabase.functions.invoke('ai-proxy', {
+        body: { mode: 'receipt', payload: imageBase64, categories: cats, accounts: accs, mimeType },
+    });
+
+    if (error) throw new Error(error.message || 'Fiş analiz hatası');
+    if (data?.error) throw new Error(data.error);
+    return data;
 };
 
 export const parseSmsWithAI = async (
