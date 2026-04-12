@@ -9,13 +9,16 @@
 import { supabase } from './supabaseClient';
 import { Category, Account } from '../types';
 
+// 30 saniye timeout — kullanıcıyı sonsuza kadar bekletmemek için
+const AI_TIMEOUT_MS = 30_000;
+
 async function callAIProxy(
     mode: 'text' | 'receipt' | 'sms',
     payload: string,
     categories: Category[],
     accounts: Account[],
+    mimeType?: string,
 ): Promise<any> {
-    // Kategori ve hesapları sadeleştir (gereksiz veri gönderme)
     const cats = categories.map(c => ({
         id: c.id,
         name: c.name,
@@ -24,19 +27,29 @@ async function callAIProxy(
     }));
     const accs = accounts.map(a => ({ id: a.id, name: a.name, type: a.type }));
 
-    const { data, error } = await supabase.functions.invoke('ai-proxy', {
-        body: { mode, payload, categories: cats, accounts: accs },
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
 
-    if (error) {
-        throw new Error(error.message || 'AI proxy çağrısı başarısız');
+    try {
+        const { data, error } = await supabase.functions.invoke('ai-proxy', {
+            body: { mode, payload, categories: cats, accounts: accs, mimeType },
+        });
+
+        if (error) {
+            throw new Error(error.message || 'AI proxy çağrısı başarısız');
+        }
+        if (data?.error) {
+            throw new Error(data.error);
+        }
+        return data;
+    } catch (e: any) {
+        if (e.name === 'AbortError' || controller.signal.aborted) {
+            throw new Error('AI yanıt vermedi (30sn zaman aşımı). Tekrar deneyin.');
+        }
+        throw e;
+    } finally {
+        clearTimeout(timer);
     }
-
-    if (data?.error) {
-        throw new Error(data.error);
-    }
-
-    return data;
 }
 
 // Public API — TransactionForm ve diğer bileşenler bunları kullanır
@@ -46,7 +59,7 @@ export const parseTransactionWithAI = async (
     categories: Category[],
     accounts: Account[],
 ): Promise<any | null> => {
-    return callAIProxy('text', prompt, categories, accounts);
+    return callAIProxy('text', prompt, categories, accounts, undefined);
 };
 
 export const parseReceiptWithAI = async (
