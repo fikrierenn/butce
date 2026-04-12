@@ -9,7 +9,6 @@
 import { supabase } from './supabaseClient';
 import { Category, Account } from '../types';
 
-// 30 saniye timeout — kullanıcıyı sonsuza kadar bekletmemek için
 const AI_TIMEOUT_MS = 30_000;
 
 async function callAIProxy(
@@ -27,23 +26,39 @@ async function callAIProxy(
     }));
     const accs = accounts.map(a => ({ id: a.id, name: a.name, type: a.type }));
 
+    // supabase.functions.invoke yerine düz fetch — AbortController ile
+    // timeout kontrolü supabase client'ın internal fetch'ine müdahale edemez.
+    const { data: { session } } = await supabase.auth.getSession();
+    const supabaseUrl = (supabase as any).supabaseUrl || process.env.SUPABASE_URL || '';
+    const supabaseKey = (supabase as any).supabaseKey || process.env.SUPABASE_ANON_KEY || '';
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
 
     try {
-        const { data, error } = await supabase.functions.invoke('ai-proxy', {
-            body: { mode, payload, categories: cats, accounts: accs, mimeType },
+        const res = await fetch(`${supabaseUrl}/functions/v1/ai-proxy`, {
+            method: 'POST',
+            signal: controller.signal,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token || supabaseKey}`,
+                'apikey': supabaseKey,
+            },
+            body: JSON.stringify({ mode, payload, categories: cats, accounts: accs, mimeType }),
         });
 
-        if (error) {
-            throw new Error(error.message || 'AI proxy çağrısı başarısız');
+        if (!res.ok) {
+            const errBody = await res.text().catch(() => '');
+            let msg = `AI proxy hatası (${res.status})`;
+            try { msg = JSON.parse(errBody).error || msg; } catch {}
+            throw new Error(msg);
         }
-        if (data?.error) {
-            throw new Error(data.error);
-        }
+
+        const data = await res.json();
+        if (data?.error) throw new Error(data.error);
         return data;
     } catch (e: any) {
-        if (e.name === 'AbortError' || controller.signal.aborted) {
+        if (e.name === 'AbortError') {
             throw new Error('AI yanıt vermedi (30sn zaman aşımı). Tekrar deneyin.');
         }
         throw e;
@@ -68,20 +83,7 @@ export const parseReceiptWithAI = async (
     categories: Category[],
     accounts: Account[],
 ): Promise<any | null> => {
-    // Receipt: Groq Llama 4 Scout vision modeli ile fiş fotoğrafı analiz edilir
-    const cats = categories.map(c => ({
-        id: c.id, name: c.name, type: c.type,
-        subcategories: c.subcategories?.map(s => ({ id: s.id, name: s.name })),
-    }));
-    const accs = accounts.map(a => ({ id: a.id, name: a.name, type: a.type }));
-
-    const { data, error } = await supabase.functions.invoke('ai-proxy', {
-        body: { mode: 'receipt', payload: imageBase64, categories: cats, accounts: accs, mimeType },
-    });
-
-    if (error) throw new Error(error.message || 'Fiş analiz hatası');
-    if (data?.error) throw new Error(data.error);
-    return data;
+    return callAIProxy('receipt', imageBase64, categories, accounts, mimeType);
 };
 
 export const parseSmsWithAI = async (
