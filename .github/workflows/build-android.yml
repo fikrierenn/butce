@@ -49,8 +49,6 @@ jobs:
       - name: Build web assets
         run: npm run build
         env:
-          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
