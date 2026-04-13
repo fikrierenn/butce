@@ -149,8 +149,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose, onSu
             setIsProcessing(true);
             setAiError(null);
 
+            console.log('[receipt] resizing file:', file.name, file.size, 'bytes');
             const { base64, mimeType } = await resizeImage(file);
+            console.log('[receipt] base64 length:', base64.length, 'chars (~', Math.round(base64.length / 1024), 'KB)');
             const result = await parseReceiptWithGemini(base64, mimeType, categories, accounts);
+            console.log('[receipt] result:', JSON.stringify(result).slice(0, 200));
             if (!result) {
                 setAiError('Fiş okunamadı. Daha net bir fotoğraf deneyin.');
                 return;

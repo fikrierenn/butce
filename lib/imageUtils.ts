@@ -2,7 +2,7 @@
  * Resim boyutlandırma utility'si
  * Fiş/makbuz fotoğraflarını Gemini API'ye göndermeden önce küçültür
  */
-export const resizeImage = (file: File, maxSize: number = 768): Promise<{ base64: string; mimeType: string }> => {
+export const resizeImage = (file: File, maxSize: number = 512): Promise<{ base64: string; mimeType: string }> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -35,8 +35,9 @@ export const resizeImage = (file: File, maxSize: number = 768): Promise<{ base64
 
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // JPEG olarak sıkıştır (kalite: 0.6 — Edge Function body limit için küçük tutuyoruz)
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                // JPEG sıkıştır — düşük kalite ama OCR için yeterli
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                console.log(`[imageUtils] Resized: ${width}x${height}, base64 len: ${dataUrl.length}`);
                 const base64 = dataUrl.split(',')[1];
 
                 resolve({ base64, mimeType: 'image/jpeg' });
